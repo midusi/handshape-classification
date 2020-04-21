@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from pathlib import Path
 import os
 import matplotlib.pyplot as plt
@@ -6,21 +6,26 @@ from sklearn.metrics import confusion_matrix
 import itertools
 import numpy as np
 
+
 default_folder = Path.home() / '.handshape_classification' / 'Results'
 
-class Experiment():
-    def __init__(self,model,dataset,epochs, batch_size):
+class Experiment(ABC):
 
+    def __init__(self,model, dataset, epochs, batch_size):
         self.id=f"{dataset}_{model}_batch{batch_size}_epochs{epochs}"
         self.epochs=epochs
         self.batch_size=batch_size
         self.model=model
         self.dataset=dataset
-        os.mkedirs(os.path.join(default_folder,self.id))
+        self.path=os.mkedirs(os.path.join(default_folder,self.id))
 
+    @abstractmethod
     def get_result(self):
-        self.get_history()
-        return True
+        pass
+
+    def get_path(self):
+        return self.path
+
 
     def get_id(self):
         return self.id

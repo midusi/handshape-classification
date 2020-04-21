@@ -11,7 +11,7 @@ from keras.applications import imagenet_utils
 from sklearn.metrics import confusion_matrix
 import itertools
 import matplotlib.pyplot as plt
-%matplotlib inline
+#%matplotlib inline
 
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn import model_selection
@@ -21,19 +21,23 @@ from skimage import io
 import handshape_datasets as hd
 import os
 from os import path
+import Experiment
 from ..Experiment import Experiment
+import logging
 
-class lsa16MobileNet(Experiment):
-    def __init__(self, epochs, batch_size):
-        self.dataset = hd.load("lsa16")
+class MobileNet(Experiment):
+
+    def __init__(self, epochs, batch_size, dataset_id):
+        super().__init__("MobileNet", dataset_id, epochs, batch_size)
+        self.dataset = hd.load(dataset_id)
         self.model_name="MobileNet"
         self.input_shape = self.dataset[0][0].shape
         self.classes= self.dataset[1]['y'].max()+1
         self.history=""
-        super.__init__(self.model_name,"lsa16",epochs,batch_size)
 
-    def get_loader(self):
-        return lsa16MobileNet()
+
+    def get_loader(self)->Experiment:
+        return MobileNet()
 
     def get_history(self):
         return self.history
@@ -42,11 +46,15 @@ class lsa16MobileNet(Experiment):
         self.history = model.fit(X_train, Y_train, batch_size=batch_size, epochs=epochs, validation_data=(X_test, Y_test))
         return self.history
 
+    def get_result(self):
+        path=self.get_path()
+        log_path=os.path.join(path, 'history.log')
+        logging.basicConfig(filename=log_path, level=logging.DEBUG)
+        logging.info(self.get_history())
+        return True
 
     def split(self,dataset, test_size):
-        X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(dataset[0], dataset[1]['y'],
-                                                                                    test_size=test_size,
-                                                                                    stratify=dataset[1]['y'])
+        X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(dataset[0], dataset[1]['y'],                                                                           test_size=test_size,                                                                           stratify=dataset[1]['y'])
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
