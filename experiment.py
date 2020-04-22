@@ -35,26 +35,31 @@ class Experiment(ABC):
     def get_id(self):
         return self.id
 
-    def plot_training_curves(self, history, acc=True):
+    def plot_training_curves(self, history, graphic_acc, graphic_loss, acc=True):
         # summarize history for accuracy
         if (acc):
             plt.figure()
+            plt.grid()
             plt.plot(history.history['accuracy'])
             plt.plot(history.history['val_accuracy'])
             plt.title('model accuracy')
             plt.ylabel('accuracy')
             plt.xlabel('epoch')
             plt.legend(['train', 'test'], loc='upper left')
-            plt.show(), plt.grid()
+            plt.savefig(graphic_acc, dpi=300)
+            plt.show()
+
         # summarize history for loss
         plt.figure()
+        plt.grid()
         plt.plot(history.history['loss'])
         plt.plot(history.history['val_loss'])
         plt.title('model loss')
         plt.ylabel('loss')
         plt.xlabel('epoch')
         plt.legend(['train', 'test'], loc='upper left')
-        plt.show(), plt.grid()
+        plt.savefig(graphic_loss, dpi=300)
+        plt.show()
         return True
 
     # Crea y Grafica una matriz de confusión
@@ -62,7 +67,7 @@ class Experiment(ABC):
     #       real_target = vector con valores esperados
     #       pred_target = vector con valores calculados por un modelo
     #       classes = lista de strings con los nombres de las clases.
-    def plot_confusion_matrix(real_target, pred_target, classes=[], normalize=False, title='Confusion matrix',
+    def plot_confusion_matrix(self, real_target, pred_target, classes=[], normalize=False, title='Confusion matrix',
                               cmap=plt.cm.Blues):
 
 
