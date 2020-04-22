@@ -1,0 +1,23 @@
+# processing
+numpy
+scikit-image
+scipy
+
+# downloading
+hurry
+requests
+patool
+gdown
+
+#procces depth image
+opencv-python
+
+# (un)zipping
+pyunpack
+
+#text format
+PrettyTable
+
+keras
+sklearn
+tensorflow-gpu

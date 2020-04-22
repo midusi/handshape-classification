@@ -5,20 +5,25 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import itertools
 import numpy as np
+import logging
 
 
 default_folder = Path.home() / '.handshape_classification' / 'Results'
 
 class Experiment(ABC):
 
-    def __init__(self,model, dataset, epochs, batch_size):
+    def __init__(self, model, dataset, epochs, batch_size):
         self.id=f"{dataset}_{model}_batch{batch_size}_epochs{epochs}"
         self.epochs=epochs
         self.batch_size=batch_size
         self.model=model
         self.dataset=dataset
-        self.path=os.mkedirs(os.path.join(default_folder,self.id))
+        self.path = os.path.join(default_folder, self.id)
+        if not os.path.exists(self.path):
+            logging.info("Create folder")
+            os.makedirs(self.path)
 
+    @property
     @abstractmethod
     def get_result(self):
         pass
@@ -30,7 +35,7 @@ class Experiment(ABC):
     def get_id(self):
         return self.id
 
-    def plot_training_curves(history, acc=True):
+    def plot_training_curves(self, history, acc=True):
         # summarize history for accuracy
         if (acc):
             plt.figure()
