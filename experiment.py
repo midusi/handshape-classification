@@ -8,7 +8,7 @@ import numpy as np
 import logging
 
 
-default_folder = Path.home() / 'handshape_classification' / 'Results'
+default_folder = Path.home() / 'handshape-classification' / 'Results'
 
 class Experiment(ABC):
 
