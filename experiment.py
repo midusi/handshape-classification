@@ -8,7 +8,7 @@ import numpy as np
 import logging
 
 
-default_folder = Path.home() / '.handshape_classification' / 'Results'
+default_folder = Path.home() / 'handshape_classification' / 'Results'
 
 class Experiment(ABC):
 
@@ -26,6 +26,10 @@ class Experiment(ABC):
     @property
     @abstractmethod
     def get_result(self):
+        pass
+
+    @abstractmethod
+    def get_params(self):
         pass
 
     def get_path(self):

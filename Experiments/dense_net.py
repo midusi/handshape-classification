@@ -23,13 +23,13 @@ import os
 from os import path
 from experiment import Experiment
 import logging
-
 from prettytable import PrettyTable
 
-class MobileNet(Experiment):
+
+class DenseNet(Experiment):
 
     def __init__(self, epochs, batch_size, dataset_id, **kwargs):
-        super().__init__("MobileNet", dataset_id, epochs, batch_size)
+        super().__init__("DenseNet", dataset_id, epochs, batch_size)
         if 'version' in kwargs:
             ver=kwargs['version']
         if 'delete' in kwargs:
@@ -44,13 +44,13 @@ class MobileNet(Experiment):
                     self.dataset=hd.load(dataset_id, delete=supr)
                 except:
                     self.dataset = hd.load(dataset_id)
-        self.model_name = "MobileNet"
+        self.model_name = "DenseNet"
         self.input_shape = self.dataset[0][0].shape
         self.classes = self.dataset[1]['y'].max() + 1
         self.history = ""
 
     def get_loader(self)->Experiment:
-        return MobileNet()
+        return DenseNet()
 
     def get_history(self):
         return self.history
@@ -82,7 +82,7 @@ class MobileNet(Experiment):
         np.savetxt(os.path.join(path,"val_acc_history.txt"), numpy_val_acc_history, delimiter=",",fmt='%0.2f')
 
         table = PrettyTable(["accuracy", "loss"])
-        for i in range(len(loss_history)-1):
+        for i in range(len(loss_history) - 1):
             table.add_row([acc_history[i], loss_history[i]])
         print(table)
 
@@ -95,8 +95,9 @@ class MobileNet(Experiment):
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
-        base_model = keras.applications.mobilenet.MobileNet(input_shape=self.input_shape, weights='imagenet',
-                                                            include_top=False)
+
+        base_model=keras.applications.densenet.DenseNet121(include_top=False, weights='imagenet', input_tensor=None,
+                                                input_shape=self.input_shape)
         output = keras.layers.GlobalAveragePooling2D()(base_model.output)
         output = keras.layers.Dense(32, activation='relu')(output)
         # Nueva capa de salida
@@ -119,7 +120,6 @@ class MobileNet(Experiment):
         self.plot_training_curves(self.history,graphic_acc_file, graphic_loss_file)
         #self.plot_confusion_matrix(y_true, y_pred)
 
-
-    def get_params(self):
+    def get_params(self,id):
 
         return True
