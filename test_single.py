@@ -3,8 +3,8 @@ from Experiments import mobile_net as mn
 from Experiments import dense_net as dn
 import handshape_datasets as hd
 
-epochs=20
-batch_size=32
+epochs=10
+batch_size=64
 dataset_id="PugeaultASL_A"
 
 
