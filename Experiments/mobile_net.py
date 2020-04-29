@@ -91,7 +91,7 @@ class MobileNet(Experiment):
     def split(self, test_size):
         X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(self.dataset[0], self.dataset[1]['y'],
                                                                                     test_size=test_size,
-                                                                                    stratify=self.dataset[1]['y'])
+                                                                                     random_state=None)
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
@@ -107,6 +107,9 @@ class MobileNet(Experiment):
 
         #y_true = model.fit_generator()
         #y_pred = model.predict_generator(model.fit_generator)
+
+
+        #y_pred = model.predict(x_val, batch_size=8)
 
         return model
 

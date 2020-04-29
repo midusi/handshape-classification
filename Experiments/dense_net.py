@@ -91,7 +91,7 @@ class DenseNet(Experiment):
     def split(self, test_size):
         X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(self.dataset[0], self.dataset[1]['y'],
                                                                                     test_size=test_size,
-                                                                                    stratify=self.dataset[1]['y'])
+                                                                                    random_state=None)
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
@@ -121,5 +121,12 @@ class DenseNet(Experiment):
         #self.plot_confusion_matrix(y_true, y_pred)
 
     def get_params(self,id):
+        if(id=="lsa16"):
+            return 32, 50
+        if (id == "rwth"):
+            return
+        if (id == "PugeaultASL_A"):
+            return
+
 
         return True
