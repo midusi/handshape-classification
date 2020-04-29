@@ -7,7 +7,7 @@ epochs=10
 batch_size=64
 dataset_id="PugeaultASL_A"
 
-
+#
 # MobileNet
 mobile = mn.MobileNet(epochs, batch_size, dataset_id)
 model = mobile.build_model()
