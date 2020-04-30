@@ -109,7 +109,7 @@ class MobileNet(Experiment):
         #y_pred = model.predict_generator(model.fit_generator)
 
 
-        #y_pred = model.predict(x_val, batch_size=8)
+
 
         return model
 
@@ -120,6 +120,9 @@ class MobileNet(Experiment):
         graphic_acc_file=os.path.join(path,"figure_acc.png")
         graphic_loss_file = os.path.join(path, "figure_loss.png")
         self.plot_training_curves(self.history,graphic_acc_file, graphic_loss_file)
+
+
+        #y_pred = model.predict(X_test, batch_size=self.batch_size)
         #self.plot_confusion_matrix(y_true, y_pred)
 
 
