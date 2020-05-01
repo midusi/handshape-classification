@@ -113,12 +113,14 @@ class DenseNet(Experiment):
 
     # lsa con batck size 32
 
-    def graphics(self):
+    def graphics(self, model, X_test, y_true):
         path = self.get_path()
         graphic_acc_file=os.path.join(path,"figure_acc.png")
         graphic_loss_file = os.path.join(path, "figure_loss.png")
         self.plot_training_curves(self.history,graphic_acc_file, graphic_loss_file)
-        #self.plot_confusion_matrix(y_true, y_pred)
+        graphic_matrix = os.path.join(path, "matrix_confusion.png")
+        y_pred = model.predict(X_test)
+        self.plot_confusion_matrix(y_true, np.argmax(y_pred, axis=1), graphic_matrix)
 
     def get_params(self,id):
         if(id=="lsa16"):

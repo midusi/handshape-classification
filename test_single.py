@@ -22,6 +22,6 @@ denseNet = dn.DenseNet(epochs, batch_size, dataset_id)
 model = denseNet.build_model()
 X_train, X_test, Y_train, Y_test = denseNet.split(0.25)
 history = denseNet.load(model, X_train, Y_train, X_test, Y_test)
-denseNet.graphics()
+denseNet.graphics(model, X_test, Y_test)
 denseNet.get_result()
 """
