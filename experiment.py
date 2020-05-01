@@ -71,7 +71,7 @@ class Experiment(ABC):
     #       real_target = vector con valores esperados
     #       pred_target = vector con valores calculados por un modelo
     #       classes = lista de strings con los nombres de las clases.
-    def plot_confusion_matrix(self, real_target, pred_target, classes=[], normalize=False, title='Confusion matrix',
+    def plot_confusion_matrix(self, real_target, pred_target,graphic_matrix ,classes=[], normalize=False, title='Confusion matrix',
                               cmap=plt.cm.Blues):
 
 
@@ -98,6 +98,10 @@ class Experiment(ABC):
         #    plt.tight_layout()
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
+        plt.savefig(graphic_matrix,dpi=300)
+        plt.show()
+
+
 
     @abstractmethod
     def load(self):

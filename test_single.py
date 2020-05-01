@@ -3,17 +3,17 @@ from Experiments import mobile_net as mn
 from Experiments import dense_net as dn
 import handshape_datasets as hd
 
-epochs=20
-batch_size=32
-dataset_id="lsa16"
+epochs=15
+batch_size=64
+dataset_id="PugeaultASL_A"
 
 #
 # MobileNet
 mobile = mn.MobileNet(epochs, batch_size, dataset_id)
 model = mobile.build_model()
-X_train, X_test, Y_train, Y_test = mobile.split(0.1)
+X_train, X_test, Y_train, Y_test = mobile.split(0.3)
 history = mobile.load(model, X_train, Y_train, X_test, Y_test)
-mobile.graphics()
+mobile.graphics(model, X_test, Y_test)
 mobile.get_result()
 """
 

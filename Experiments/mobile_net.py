@@ -91,7 +91,7 @@ class MobileNet(Experiment):
     def split(self, test_size):
         X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(self.dataset[0], self.dataset[1]['y'],
                                                                                     test_size=test_size,
-                                                                                     random_state=None)
+                                                                                    stratify=self.dataset[1]['y'])
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
@@ -105,25 +105,20 @@ class MobileNet(Experiment):
         # Entrenar con nuevos datos
         model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-        #y_true = model.fit_generator()
-        #y_pred = model.predict_generator(model.fit_generator)
-
-
-
 
         return model
 
     # lsa con batck size 32
 
-    def graphics(self):
+    def graphics(self, model, X_test, y_true):
         path = self.get_path()
         graphic_acc_file=os.path.join(path,"figure_acc.png")
         graphic_loss_file = os.path.join(path, "figure_loss.png")
         self.plot_training_curves(self.history,graphic_acc_file, graphic_loss_file)
 
-
-        #y_pred = model.predict(X_test, batch_size=self.batch_size)
-        #self.plot_confusion_matrix(y_true, y_pred)
+        graphic_matrix = os.path.join(path, "matrix_confusion.png")
+        y_pred = model.predict(X_test)
+        self.plot_confusion_matrix(y_true, np.argmax(y_pred, axis = 1),graphic_matrix)
 
 
     def get_params(self):
