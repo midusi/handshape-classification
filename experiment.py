@@ -35,7 +35,6 @@ class Experiment(ABC):
     def get_path(self):
         return self.path
 
-
     def get_id(self):
         return self.id
 
@@ -73,8 +72,6 @@ class Experiment(ABC):
     #       classes = lista de strings con los nombres de las clases.
     def plot_confusion_matrix(self, real_target, pred_target,graphic_matrix ,classes=[], normalize=False, title='Confusion matrix',
                               cmap=plt.cm.Blues):
-
-
         if (len(classes) == 0):
             classes = [str(i) for i in range(int(max(real_target) + 1))]  # nombres de clases consecutivos
         cm = confusion_matrix(real_target, pred_target)
@@ -98,7 +95,7 @@ class Experiment(ABC):
         #    plt.tight_layout()
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
-        plt.savefig(graphic_matrix,dpi=300)
+        plt.savefig(graphic_matrix,dpi=400)
         plt.show()
 
 

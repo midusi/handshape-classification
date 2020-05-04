@@ -86,18 +86,37 @@ class DenseNet(Experiment):
             table.add_row([acc_history[i], loss_history[i]])
         print(table)
 
-        return True
+        return acc_history[len(acc_history)-1], numpy_acc_history.mean()
 
     def split(self, test_size):
+
+        cant_examples = np.zeros(self.dataset[1]['y'].max() + 1)
+        for i in self.dataset[1]['y']:
+            cant_examples[i] += 1
+        select = np.where(cant_examples >= (self.dataset[0].shape[0] / self.classes) * 0.2)
+        y_new = np.array((), dtype='uint8')
+        pos = np.array((), dtype='uint8')
+        for (k, cla) in enumerate(self.dataset[1]['y']):
+            for j in select[0]:
+                if (cla == j):
+                    y_new = np.append(y_new, cla)
+                    pos = np.append(pos, k)
+        x_new = np.zeros((len(y_new), self.input_shape[0], self.input_shape[1], self.input_shape[2]), dtype='uint8')
+        for (i, index) in enumerate(pos):
+            x_new[i] = self.dataset[0][index]
+
         X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(self.dataset[0], self.dataset[1]['y'],
                                                                                     test_size=test_size,
                                                                                     random_state=None)
+        if (X_train.shape[3]==1):
+            X_train = np.repeat(X_train, 3, -1)
+            X_test = np.repeat(X_test, 3, -1)
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
 
         base_model=keras.applications.densenet.DenseNet121(include_top=False, weights='imagenet', input_tensor=None,
-                                                input_shape=self.input_shape)
+                                                input_shape=(self.input_shape[0],self.input_shape[1],3))
         output = keras.layers.GlobalAveragePooling2D()(base_model.output)
         output = keras.layers.Dense(32, activation='relu')(output)
         # Nueva capa de salida
@@ -106,12 +125,7 @@ class DenseNet(Experiment):
         # Entrenar con nuevos datos
         model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-        #y_true = model.fit_generator()
-        #y_pred = model.predict_generator(model.fit_generator)
-
         return model
-
-    # lsa con batck size 32
 
     def graphics(self, model, X_test, y_true):
         path = self.get_path()

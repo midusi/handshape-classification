@@ -85,17 +85,33 @@ class MobileNet(Experiment):
         for i in range(len(loss_history)-1):
             table.add_row([acc_history[i], loss_history[i]])
         print(table)
-
-        return True
+        return acc_history[len(acc_history)-1], numpy_acc_history.mean() #return the last value
 
     def split(self, test_size):
-        X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(self.dataset[0], self.dataset[1]['y'],
+        cant_examples = np.zeros(self.dataset[1]['y'].max() + 1)
+        for i in self.dataset[1]['y']:
+            cant_examples[i] += 1
+        select = np.where(cant_examples >= (self.dataset[0].shape[0] / self.classes) * 0.2)
+        y_new = np.array((), dtype='uint8')
+        pos = np.array((), dtype='uint8')
+        for (k, cla) in enumerate(self.dataset[1]['y']):
+            for j in select[0]:
+                if (cla == j):
+                    y_new = np.append(y_new, cla)
+                    pos = np.append(pos, k)
+        x_new = np.zeros((len(y_new), self.input_shape[0], self.input_shape[1], self.input_shape[2]), dtype='uint8')
+        for (i, index) in enumerate(pos):
+            x_new[i] = self.dataset[0][index]
+        X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(x_new, y_new,
                                                                                     test_size=test_size,
-                                                                                    stratify=self.dataset[1]['y'])
+                                                                                    stratify=y_new)
+        if (X_train.shape[3]==1):
+            X_train = np.repeat(X_train, 3, -1)
+            X_test = np.repeat(X_test, 3, -1)
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
-        base_model = keras.applications.mobilenet.MobileNet(input_shape=self.input_shape, weights='imagenet',
+        base_model = keras.applications.mobilenet.MobileNet(input_shape=(self.input_shape[0],self.input_shape[1],3), weights='imagenet',
                                                             include_top=False)
         output = keras.layers.GlobalAveragePooling2D()(base_model.output)
         output = keras.layers.Dense(32, activation='relu')(output)
@@ -104,11 +120,8 @@ class MobileNet(Experiment):
         model = Model(inputs=base_model.input, outputs=output)
         # Entrenar con nuevos datos
         model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
-
         return model
 
-    # lsa con batck size 32
 
     def graphics(self, model, X_test, y_true):
         path = self.get_path()
