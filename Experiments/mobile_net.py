@@ -82,10 +82,10 @@ class MobileNet(Experiment):
         np.savetxt(os.path.join(path,"val_acc_history.txt"), numpy_val_acc_history, delimiter=",",fmt='%0.2f')
 
         table = PrettyTable(["accuracy", "loss"])
-        for i in range(len(loss_history)-1):
+        for i in range(len(loss_history)):
             table.add_row([acc_history[i], loss_history[i]])
         print(table)
-        return acc_history[len(acc_history)-1], numpy_acc_history.mean() #return the last value
+        return acc_history[len(acc_history)-1] #return the last value
 
     def split(self, test_size):
         cant_examples = np.zeros(self.dataset[1]['y'].max() + 1)
@@ -123,15 +123,15 @@ class MobileNet(Experiment):
         return model
 
 
-    def graphics(self, model, X_test, y_true):
+    def graphics(self, model, X_test, y_true, show_graphic, show_matrix):
         path = self.get_path()
         graphic_acc_file=os.path.join(path,"figure_acc.png")
         graphic_loss_file = os.path.join(path, "figure_loss.png")
-        self.plot_training_curves(self.history,graphic_acc_file, graphic_loss_file)
+        self.plot_training_curves(self.history,graphic_acc_file, graphic_loss_file,show_graphic)
 
         graphic_matrix = os.path.join(path, "matrix_confusion.png")
         y_pred = model.predict(X_test)
-        self.plot_confusion_matrix(y_true, np.argmax(y_pred, axis = 1),graphic_matrix)
+        self.plot_confusion_matrix(y_true, np.argmax(y_pred, axis = 1),graphic_matrix,show_matrix)
 
 
     def get_params(self):

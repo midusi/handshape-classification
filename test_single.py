@@ -6,37 +6,36 @@ import parameters
 import numpy as np
 from prettytable import PrettyTable
 
-epochs=15
+epochs=5
 batch_size=32
 dataset_id="lsa16"
 #lsa split 0,1
 #rwth 0,2
 #asl A 0.3
+iteracion=10
 
 
-acc_avg_mo=np.zeros(10)
-acc_avg_de=np.zeros(10)
+acc_avg_mo=np.zeros(iteracion)
+acc_avg_de=np.zeros(iteracion)
 table=PrettyTable(["Dataset", "MobileNet", "DenseNet"])
-for i in range(10):
+for i in range(iteracion):
   mobile = mn.MobileNet(epochs, parameters.get_batch_mobile(dataset_id), dataset_id)
   model = mobile.build_model()
   X_train, X_test, Y_train, Y_test = mobile.split(parameters.get_split_value(dataset_id))
   history = mobile.load(model, X_train, Y_train, X_test, Y_test)
-  mobile.graphics(model, X_test, Y_test)
-  acc_last_mobile, acc_avg_mobile=mobile.get_result()
-
-  acc_avg_mo[i]=acc_avg_mobile
+  mobile.graphics(model, X_test, Y_test, show_graphic=True, show_matrix=False)
+  acc_last_mobile=mobile.get_result()
+  acc_avg_mo[i]=acc_last_mobile
 
   #DenseNet
   denseNet = dn.DenseNet(epochs, parameters.get_batch_dense(dataset_id), dataset_id)
   model = denseNet.build_model()
   X_train, X_test, Y_train, Y_test = denseNet.split(parameters.get_split_value(dataset_id))
   history = denseNet.load(model, X_train, Y_train, X_test, Y_test)
-  denseNet.graphics(model, X_test, Y_test)
-  acc_last_dense, acc_avg_dense=denseNet.get_result()
+  denseNet.graphics(model, X_test, Y_test, show_graphic=False, show_matrix=True)
+  acc_last_dense=denseNet.get_result()
+  acc_avg_de[i] = acc_last_dense
 
-  acc_avg_de[i] = acc_avg_dense
-
-table.add_row(dataset_id,acc_avg_mo.mean(), acc_avg_de.mean())
+table.add_row([dataset_id,acc_avg_mo.mean(), acc_avg_de.mean()])
 print("Accuracy values:")
 print(table)

@@ -38,7 +38,7 @@ class Experiment(ABC):
     def get_id(self):
         return self.id
 
-    def plot_training_curves(self, history, graphic_acc, graphic_loss, acc=True):
+    def plot_training_curves(self, history, graphic_acc, graphic_loss, show_graphic, acc=True):
         # summarize history for accuracy
         if (acc):
             plt.figure()
@@ -50,8 +50,9 @@ class Experiment(ABC):
             plt.xlabel('epoch')
             plt.legend(['train', 'test'], loc='upper left')
             plt.savefig(graphic_acc, dpi=300)
-            plt.show()
-
+            if(show_graphic==True):
+                plt.show()
+        plt.close()
         # summarize history for loss
         plt.figure()
         plt.grid()
@@ -62,7 +63,9 @@ class Experiment(ABC):
         plt.xlabel('epoch')
         plt.legend(['train', 'test'], loc='upper left')
         plt.savefig(graphic_loss, dpi=300)
-        plt.show()
+        if (show_graphic==True):
+            plt.show()
+        plt.close()
         return True
 
     # Crea y Grafica una matriz de confusión
@@ -70,7 +73,7 @@ class Experiment(ABC):
     #       real_target = vector con valores esperados
     #       pred_target = vector con valores calculados por un modelo
     #       classes = lista de strings con los nombres de las clases.
-    def plot_confusion_matrix(self, real_target, pred_target,graphic_matrix ,classes=[], normalize=False, title='Confusion matrix',
+    def plot_confusion_matrix(self, real_target, pred_target,graphic_matrix,show_matrix ,classes=[],normalize=False, title='Confusion matrix',
                               cmap=plt.cm.Blues):
         if (len(classes) == 0):
             classes = [str(i) for i in range(int(max(real_target) + 1))]  # nombres de clases consecutivos
@@ -96,7 +99,9 @@ class Experiment(ABC):
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
         plt.savefig(graphic_matrix,dpi=400)
-        plt.show()
+        if(show_matrix==True):
+            plt.show()
+        plt.close()
 
 
 
