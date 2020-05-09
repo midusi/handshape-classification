@@ -132,6 +132,11 @@ class DenseNet(Experiment):
         graphic_acc_file=os.path.join(path,"figure_acc.png")
         graphic_loss_file = os.path.join(path, "figure_loss.png")
         self.plot_training_curves(self.history,graphic_acc_file, graphic_loss_file,show_graphic)
+
+        if (self.classes > 60):
+            print("It takes some minutes, because of the amount of classes")
+            print("Maybe you should make zoom in the save file")
+
         graphic_matrix = os.path.join(path, "matrix_confusion.png")
         y_pred = model.predict(X_test)
         self.plot_confusion_matrix(y_true, np.argmax(y_pred, axis=1), graphic_matrix,show_matrix)

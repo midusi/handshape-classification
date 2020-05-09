@@ -3,6 +3,8 @@ from Experiments import mobile_net as mn
 from Experiments import dense_net as dn
 import handshape_datasets as hd
 import numpy as np
+from pathlib import Path
+import os
 
 from prettytable import PrettyTable
 import parameters
@@ -10,6 +12,7 @@ import parameters
 epochs=15
 #batch_size=32
 
+default_folder = Path.home() / 'handshape-classification' / 'Results'
 
 table=PrettyTable(["Dataset", "MobileNet", "DenseNet"])
 for dataset_id in hd.ids():
@@ -41,3 +44,8 @@ for dataset_id in hd.ids():
     table.add_row([dataset_id,acc_avg_mo.mean(), acc_avg_de.mean()])
     print("Accuracy values:")
     print(table)
+data = table.get_string()
+print(data)
+file = os.path.join(default_folder, 'Accuracy_table.txt')
+with open(file, 'w') as f:
+    f.write(data)
