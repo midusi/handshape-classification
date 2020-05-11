@@ -1,16 +1,19 @@
 import numpy as np
 import keras
 from keras.models import Model
+import efficientnet.keras as efn
 import sklearn
 import handshape_datasets as hd
 import os
 from experiment import Experiment
+
+
 from prettytable import PrettyTable
 
-class DenseNet(Experiment):
+class EfficientNet(Experiment):
 
     def __init__(self, epochs, batch_size, dataset_id, **kwargs):
-        super().__init__("DenseNet", dataset_id, epochs, batch_size)
+        super().__init__("EfficientNet", dataset_id, epochs, batch_size)
         if 'version' in kwargs:
             ver=kwargs['version']
         if 'delete' in kwargs:
@@ -25,13 +28,13 @@ class DenseNet(Experiment):
                     self.dataset=hd.load(dataset_id, delete=supr)
                 except:
                     self.dataset = hd.load(dataset_id)
-        self.model_name = "DenseNet"
+        self.model_name = "EfficientNet"
         self.input_shape = self.dataset[0][0].shape
         self.classes = self.dataset[1]['y'].max() + 1
         self.history = ""
 
     def get_loader(self)->Experiment:
-        return DenseNet()
+        return EfficientNet()
 
     def get_history(self):
         return self.history
@@ -66,8 +69,7 @@ class DenseNet(Experiment):
         for i in range(len(loss_history)):
             table.add_row([acc_history[i], loss_history[i]])
         print(table)
-
-        return acc_history[len(acc_history)-1]
+        return acc_history[len(acc_history)-1] #return the last value
 
     def split(self, test_size):
 
@@ -85,19 +87,16 @@ class DenseNet(Experiment):
         x_new = np.zeros((len(y_new), self.input_shape[0], self.input_shape[1], self.input_shape[2]), dtype='uint8')
         for (i, index) in enumerate(pos):
             x_new[i] = self.dataset[0][index]
-
-        X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(self.dataset[0], self.dataset[1]['y'],
+        X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(x_new, y_new,
                                                                                     test_size=test_size,
-                                                                                    random_state=None)
+                                                                                    stratify=y_new)
         if (X_train.shape[3]==1):
             X_train = np.repeat(X_train, 3, -1)
             X_test = np.repeat(X_test, 3, -1)
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
-
-        base_model=keras.applications.densenet.DenseNet121(include_top=False, weights='imagenet', input_tensor=None,
-                                                input_shape=(self.input_shape[0],self.input_shape[1],3))
+        base_model = efn.EfficientNetB0(weights='imagenet',input_shape=(self.input_shape[0],self.input_shape[1],3), include_top=False)
         output = keras.layers.GlobalAveragePooling2D()(base_model.output)
         output = keras.layers.Dense(32, activation='relu')(output)
         # Nueva capa de salida
@@ -105,19 +104,19 @@ class DenseNet(Experiment):
         model = Model(inputs=base_model.input, outputs=output)
         # Entrenar con nuevos datos
         model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
         return model
 
-    def graphics(self, model, X_test, y_true,show_graphic, show_matrix):
+
+    def graphics(self, model, X_test, y_true, show_graphic, show_matrix):
         path = self.get_path()
         graphic_acc_file=os.path.join(path,"figure_acc.png")
         graphic_loss_file = os.path.join(path, "figure_loss.png")
         self.plot_training_curves(self.history,graphic_acc_file, graphic_loss_file,show_graphic)
 
-        if (self.classes > 60):
+        if(self.classes>60):
             print("It takes some minutes, because of the amount of classes")
             print("Maybe you should make zoom in the save file")
 
         graphic_matrix = os.path.join(path, "matrix_confusion.png")
         y_pred = model.predict(X_test)
-        self.plot_confusion_matrix(y_true, np.argmax(y_pred, axis=1), graphic_matrix,show_matrix)
+        self.plot_confusion_matrix(y_true, np.argmax(y_pred, axis = 1),graphic_matrix,show_matrix)

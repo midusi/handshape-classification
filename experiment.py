@@ -28,10 +28,6 @@ class Experiment(ABC):
     def get_result(self):
         pass
 
-    @abstractmethod
-    def get_params(self):
-        pass
-
     def get_path(self):
         return self.path
 
@@ -127,7 +123,6 @@ class Experiment(ABC):
 
 
         plt.close()
-
 
 
     @abstractmethod

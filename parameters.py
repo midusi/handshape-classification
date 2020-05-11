@@ -41,6 +41,21 @@ thisdict_batch_size_dense =	{
   "PugeaultASL_B":32,
 }
 
+thisdict_batch_size_eff =	{
+  "lsa16": 32,
+  "Irish": 64,
+  "rwth": 64,
+  "Ciarp": 64,
+  "indianA":64,
+  "indianB":64,
+  "jsl": 64,
+  "Nus1": 16,
+  "Nus2": 32,
+  "psl": 32,
+  "PugeaultASL_A":64,
+  "PugeaultASL_B":64,
+}
+
 def get_split_value(dataset_id):
     return thisdict_split[dataset_id]
 
@@ -49,3 +64,6 @@ def get_batch_mobile(dataset_id):
 
 def get_batch_dense(dataset_id):
     return thisdict_batch_size_dense[dataset_id]
+
+def get_batch_eff(dataset_id):
+  return thisdict_batch_size_eff[dataset_id]

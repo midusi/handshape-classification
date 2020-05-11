@@ -1,29 +1,10 @@
 import numpy as np
-from keras.preprocessing import image
 import keras
-from keras import backend as K
-from keras.layers.core import Dense
-from keras.optimizers import Adam
-from keras.metrics import categorical_crossentropy
-from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Model
-from keras.applications import imagenet_utils
-from sklearn.metrics import confusion_matrix
-import itertools
-import matplotlib.pyplot as plt
-# %matplotlib inline
-
-from mpl_toolkits.mplot3d import Axes3D
-from sklearn import model_selection
 import sklearn
-from pathlib import Path
-from skimage import io
 import handshape_datasets as hd
 import os
-from os import path
 from experiment import Experiment
-import logging
-
 from prettytable import PrettyTable
 
 class MobileNet(Experiment):
@@ -88,10 +69,11 @@ class MobileNet(Experiment):
         return acc_history[len(acc_history)-1] #return the last value
 
     def split(self, test_size):
+
         cant_examples = np.zeros(self.dataset[1]['y'].max() + 1)
         for i in self.dataset[1]['y']:
             cant_examples[i] += 1
-        select = np.where(cant_examples >= (self.dataset[0].shape[0] / self.classes) * 0.2)
+        select = np.where(cant_examples >= (self.dataset[0].shape[0] / self.classes) * test_size)
         y_new = np.array((), dtype='uint8')
         pos = np.array((), dtype='uint8')
         for (k, cla) in enumerate(self.dataset[1]['y']):
@@ -137,9 +119,3 @@ class MobileNet(Experiment):
         y_pred = model.predict(X_test)
         self.plot_confusion_matrix(y_true, np.argmax(y_pred, axis = 1),graphic_matrix,show_matrix)
 
-
-
-
-    def get_params(self):
-
-        return True
