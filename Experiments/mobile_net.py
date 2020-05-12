@@ -6,6 +6,7 @@ import handshape_datasets as hd
 import os
 from experiment import Experiment
 from prettytable import PrettyTable
+from sklearn import model_selection
 
 class MobileNet(Experiment):
 

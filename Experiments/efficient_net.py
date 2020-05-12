@@ -6,6 +6,7 @@ import sklearn
 import handshape_datasets as hd
 import os
 from experiment import Experiment
+from sklearn import model_selection
 
 
 from prettytable import PrettyTable

@@ -6,6 +6,7 @@ from sklearn.metrics import confusion_matrix
 import itertools
 import numpy as np
 import logging
+from sklearn import model_selection
 
 
 default_folder = Path.home() / 'handshape-classification' / 'Results'
