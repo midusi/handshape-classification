@@ -13,15 +13,25 @@ default_folder = Path.home() / 'handshape-classification' / 'Results'
 
 class Experiment(ABC):
 
-    def __init__(self, model, dataset, epochs, batch_size):
-        self.id=f"{dataset}_{model}_batch{batch_size}_epochs{epochs}"
+    def __init__(self, model, dataset, epochs, batch_size,**kwargs):
+        if 'tl' in kwargs:
+            if (kwargs['tl']==False):
+                self.id=f"{dataset}_{model}_batch{batch_size}_epochs{epochs}_noTL"
+            else:
+                self.id = f"{dataset}_{model}_batch{batch_size}_epochs{epochs}"
+        else:
+            self.id=f"{dataset}_{model}_batch{batch_size}_epochs{epochs}_noTL"
         self.epochs=epochs
         self.batch_size=batch_size
         self.model=model
         self.dataset=dataset
-        self.path = os.path.join(default_folder, self.id)
+        self.path1 = os.path.join(default_folder,self.model)
+        if not os.path.exists(self.path1):
+            logging.info(f"Create folder {self.path1}")
+            os.makedirs(self.path1)
+        self.path= os.path.join(self.path1,self.id)
         if not os.path.exists(self.path):
-            logging.info("Create folder")
+            logging.info(f"Create folder {self.path}")
             os.makedirs(self.path)
 
     @property

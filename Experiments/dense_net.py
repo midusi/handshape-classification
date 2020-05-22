@@ -10,7 +10,12 @@ from prettytable import PrettyTable
 class DenseNet(Experiment):
 
     def __init__(self, epochs, batch_size, dataset_id, **kwargs):
-        super().__init__("DenseNet", dataset_id, epochs, batch_size)
+        if 'tl' in kwargs:
+            self.tl=kwargs['tl']
+            super().__init__("DenseNet", dataset_id, epochs, batch_size, tl=self.tl)
+        else:
+            super().__init__("DenseNet", dataset_id, epochs, batch_size)
+            self.tl = True  # default
         if 'version' in kwargs:
             ver=kwargs['version']
         if 'delete' in kwargs:
@@ -85,19 +90,22 @@ class DenseNet(Experiment):
         x_new = np.zeros((len(y_new), self.input_shape[0], self.input_shape[1], self.input_shape[2]), dtype='uint8')
         for (i, index) in enumerate(pos):
             x_new[i] = self.dataset[0][index]
-
-        X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(self.dataset[0], self.dataset[1]['y'],
+        X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(x_new, y_new,
                                                                                     test_size=test_size,
-                                                                                    random_state=None)
+                                                                                    stratify=y_new)
         if (X_train.shape[3]==1):
             X_train = np.repeat(X_train, 3, -1)
             X_test = np.repeat(X_test, 3, -1)
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
-
-        base_model=keras.applications.densenet.DenseNet121(include_top=False, weights='imagenet', input_tensor=None,
+        if(self.tl):
+            base_model=keras.applications.densenet.DenseNet121(include_top=False, weights="imagenet", input_tensor=None,
                                                 input_shape=(self.input_shape[0],self.input_shape[1],3))
+        else:
+            base_model = keras.applications.densenet.DenseNet121(include_top=False, weights=None, input_tensor=None,
+                                                                 input_shape=(
+                                                                 self.input_shape[0], self.input_shape[1], 3))
         output = keras.layers.GlobalAveragePooling2D()(base_model.output)
         output = keras.layers.Dense(32, activation='relu')(output)
         # Nueva capa de salida

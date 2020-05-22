@@ -14,7 +14,12 @@ from prettytable import PrettyTable
 class EfficientNet(Experiment):
 
     def __init__(self, epochs, batch_size, dataset_id, **kwargs):
-        super().__init__("EfficientNet", dataset_id, epochs, batch_size)
+        if 'tl' in kwargs:
+            self.tl=kwargs['tl']
+            super().__init__("EfficientNet", dataset_id, epochs, batch_size, tl=self.tl)
+        else:
+            super().__init__("EfficientNet", dataset_id, epochs, batch_size)
+            self.tl=True #default
         if 'version' in kwargs:
             ver=kwargs['version']
         if 'delete' in kwargs:
@@ -97,7 +102,12 @@ class EfficientNet(Experiment):
         return X_train, X_test, Y_train, Y_test
 
     def build_model(self):
-        base_model = efn.EfficientNetB0(weights='imagenet',input_shape=(self.input_shape[0],self.input_shape[1],3), include_top=False)
+        if (self.tl):
+            base_model = efn.EfficientNetB0(weights="imagenet",input_shape=(self.input_shape[0],self.input_shape[1],3), include_top=False)
+        else:
+            base_model = efn.EfficientNetB0(weights=None,
+                                            input_shape=(self.input_shape[0], self.input_shape[1], 3),
+                                            include_top=False)
         output = keras.layers.GlobalAveragePooling2D()(base_model.output)
         output = keras.layers.Dense(32, activation='relu')(output)
         # Nueva capa de salida
