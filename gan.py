@@ -10,16 +10,35 @@ import handshape_datasets as hd
 import parameters
 import os
 from sklearn import model_selection
+import handshape_datasets
 
 default_folder = Path.home() / 'handshape-classification' / 'GANResults'
 
 class GAN():
 
-    def __init__(self):
-        self.img_rows = 38
-        self.img_cols = 38
+    def __init__(self,dataset_id,**kwargs):
+        if 'version' in kwargs:
+            ver=kwargs['version']
+        if 'delete' in kwargs:
+            supr= kwargs['delete']
+        try:
+            self.dataset = hd.load(dataset_id, version=ver, delete=supr)
+        except:
+            try:
+                self.dataset=hd.load(dataset_id, version=ver)
+            except:
+                try:
+                    self.dataset=hd.load(dataset_id, delete=supr)
+                except:
+                    self.dataset = hd.load(dataset_id)
+
+        self.input_shape = self.dataset[0][0].shape
+        self.img_rows = self.input_shape[0]
+        self.img_cols = self.input_shape[1]
         self.channels = 3
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
+
+        self.name=dataset_id
 
         optimizer = Adam(0.0002, 0.5)
 
@@ -130,7 +149,7 @@ class GAN():
         x,metadata= hd.load(dataset_id)
         X_train, X_test, Y_train, Y_test=self.split(parameters.get_split_value(dataset_id),x,metadata['y'])
         # Rescale -1 to 1
-        #X_train = (X_train.astype(np.float32) - 127.5) / 127.5
+        X_train = (X_train.astype(np.float32) - 127.5) / 127.5
         #X_train = np.expand_dims(X_train, axis=3)
 
         half_batch = int(batch_size / 2)
@@ -191,7 +210,10 @@ class GAN():
                 axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
                 axs[i,j].axis('off')
                 cnt += 1
-        fig.savefig(os.path.join(self.path, f"GANimage_{epoch}.png"))
+        save_path=os.path.join(self.path,self.name)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        fig.savefig(os.path.join(save_path, f"GANimage_{epoch}.png"))
         plt.close()
 
 """
