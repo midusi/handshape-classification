@@ -10,7 +10,7 @@ from pathlib import Path
 import os
 
 epochs=10
-dataset_id="jsl"
+dataset_id="indianB"
 iteracion=1
 
 default_folder = Path.home() / 'handshape-classification' / 'Results'

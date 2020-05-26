@@ -2,6 +2,8 @@ import numpy as np
 import keras
 from keras.models import Model
 import sklearn
+from skimage import transform
+
 import handshape_datasets as hd
 import os
 from experiment import Experiment
@@ -32,6 +34,13 @@ class DenseNet(Experiment):
                     self.dataset = hd.load(dataset_id)
         self.model_name = "DenseNet"
         self.input_shape = self.dataset[0][0].shape
+
+        HEIGHT=128
+        WIDTH=128
+
+        if (self.input_shape[0]+self.input_shape[1]>600):
+            self.input_shape=(HEIGHT,WIDTH,self.input_shape[2])
+
         self.classes = self.dataset[1]['y'].max() + 1
         self.history = ""
 
@@ -87,12 +96,30 @@ class DenseNet(Experiment):
                 if (cla == j):
                     y_new = np.append(y_new, cla)
                     pos = np.append(pos, k)
-        x_new = np.zeros((len(y_new), self.input_shape[0], self.input_shape[1], self.input_shape[2]), dtype='uint8')
+        x_new = np.zeros((len(y_new), self.dataset[0].shape[1], self.dataset[0].shape[2], self.input_shape[2]), dtype='uint8')
         for (i, index) in enumerate(pos):
             x_new[i] = self.dataset[0][index]
         X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(x_new, y_new,
                                                                                     test_size=test_size,
                                                                                     stratify=y_new)
+        if (X_train.shape[0] + X_train.shape[1] > 600):
+            HEIGHT = 128
+            WIDTH = 128
+            X_train_resize = np.zeros((X_train.shape[0], HEIGHT, WIDTH, 1))
+            X_test_resize = np.zeros((X_test.shape[0], HEIGHT, WIDTH, 1))
+            for i, x in enumerate(X_train):
+                X_train_resize[i] = transform.resize(
+                    x, (HEIGHT, WIDTH), preserve_range=True, mode="reflect", anti_aliasing=True)
+            for i, x_t in enumerate(X_test):
+                X_test_resize[i] = transform.resize(
+                    x_t, (HEIGHT, WIDTH), preserve_range=True, mode="reflect", anti_aliasing=True)
+
+            if (X_train_resize.shape[3] == 1):
+                X_train_resize = np.repeat(X_train_resize, 3, -1)
+                X_test_resize = np.repeat(X_test_resize, 3, -1)
+
+            return X_train_resize, X_test_resize, Y_train, Y_test
+
         if (X_train.shape[3]==1):
             X_train = np.repeat(X_train, 3, -1)
             X_test = np.repeat(X_test, 3, -1)
