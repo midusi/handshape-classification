@@ -1,7 +1,7 @@
 from gan import GAN
 import handshape_datasets as hd
 
-dataset_id="lsa16"
+dataset_id="Nus1"
 
 gan = GAN(dataset_id)
 

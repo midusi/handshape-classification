@@ -51,6 +51,10 @@ class DenseNet(Experiment):
         return self.history
 
     def load(self, model, X_train, Y_train, X_test, Y_test):
+        for i,x in enumerate(X_train):
+            X_train[i]=keras.applications.densenet.preprocess_input(x)
+        for j,xt in enumerate(X_test):
+            X_test[j]=keras.applications.densenet.preprocess_input(xt)
         self.history = model.fit(X_train, Y_train, batch_size=self.batch_size, epochs=self.epochs,
                                  validation_data=(X_test, Y_test))
 
@@ -102,7 +106,7 @@ class DenseNet(Experiment):
         X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(x_new, y_new,
                                                                                     test_size=test_size,
                                                                                     stratify=y_new)
-        if (X_train.shape[0] + X_train.shape[1] > 600):
+        if (X_train.shape[1] + X_train.shape[2] > 600):
             HEIGHT = 128
             WIDTH = 128
             X_train_resize = np.zeros((X_train.shape[0], HEIGHT, WIDTH, 1))

@@ -9,7 +9,7 @@ from prettytable import PrettyTable
 from pathlib import Path
 import os
 
-epochs=10
+epochs=15
 dataset_id="indianB"
 iteracion=1
 
@@ -51,7 +51,6 @@ table.add_row([dataset_id,acc_avg_mo.mean(), acc_avg_de.mean(),acc_avg_eff.mean(
 print("Accuracy values:")
 print(table)
 data = table.get_string()
-print(data)
 file = os.path.join(default_folder, 'Accuracy_table.txt')
 with open(file, 'w') as f:
    f.write(data)

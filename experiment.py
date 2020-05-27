@@ -20,7 +20,7 @@ class Experiment(ABC):
             else:
                 self.id = f"{dataset}_{model}_batch{batch_size}_epochs{epochs}"
         else:
-            self.id=f"{dataset}_{model}_batch{batch_size}_epochs{epochs}_noTL"
+            self.id=f"{dataset}_{model}_batch{batch_size}_epochs{epochs}"
         self.epochs=epochs
         self.batch_size=batch_size
         self.model=model
