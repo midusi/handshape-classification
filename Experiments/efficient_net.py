@@ -4,7 +4,7 @@ from keras.models import Model
 import efficientnet.keras as efn
 import sklearn
 from skimage import transform
-
+import tensorflow as tf
 import handshape_datasets as hd
 import os
 from experiment import Experiment
@@ -39,8 +39,8 @@ class EfficientNet(Experiment):
         self.model_name = "EfficientNet"
         self.input_shape = self.dataset[0][0].shape
 
-        HEIGHT=128
-        WIDTH=128
+        HEIGHT=64
+        WIDTH=64
 
         if (self.input_shape[0]+self.input_shape[1]>600):
             self.input_shape=(HEIGHT,WIDTH,self.input_shape[2])
@@ -54,10 +54,6 @@ class EfficientNet(Experiment):
         return self.history
 
     def load(self, model, X_train, Y_train, X_test, Y_test):
-        for i,x in enumerate(X_train):
-            X_train[i]=efn.preprocess_input(x)
-        for j,xt in enumerate(X_test):
-            X_test[j]=efn.preprocess_input(xt)
         self.history = model.fit(X_train, Y_train, batch_size=self.batch_size, epochs=self.epochs,
                                  validation_data=(X_test, Y_test))
 
@@ -109,8 +105,8 @@ class EfficientNet(Experiment):
                                                                                     test_size=test_size,
                                                                                     stratify=y_new)
         if (X_train.shape[1] + X_train.shape[2] > 600):
-            HEIGHT = 128
-            WIDTH = 128
+            HEIGHT = 64
+            WIDTH = 64
             X_train_resize = np.zeros((X_train.shape[0], HEIGHT, WIDTH, 1))
             X_test_resize = np.zeros((X_test.shape[0], HEIGHT, WIDTH, 1))
             for i, x in enumerate(X_train):
@@ -124,12 +120,39 @@ class EfficientNet(Experiment):
                 X_train_resize = np.repeat(X_train_resize, 3, -1)
                 X_test_resize = np.repeat(X_test_resize, 3, -1)
 
-            return X_train_resize, X_test_resize, Y_train, Y_test
+            X_train_resize_preprocess = np.zeros(
+                (X_train_resize.shape[0], X_train_resize.shape[1], X_train_resize.shape[2], X_train_resize.shape[3]),
+                dtype=np.float32)
+            X_test_resize_preprocess = np.zeros(
+                (X_test_resize.shape[0], X_test_resize.shape[1], X_test_resize.shape[2], X_test_resize.shape[3]),
+                dtype=np.float32)
+            for i, x in enumerate(X_train_resize):
+                x = tf.cast(x, tf.float32)
+                x = efn.preprocess_input(x)
+                X_train_resize_preprocess[i] = x
+            for j, xt in enumerate(X_test_resize):
+                xt = tf.cast(xt, tf.float32)
+                xt = efn.preprocess_input(xt)
+                X_test_resize_preprocess[j] = xt
+            return X_train_resize_preprocess, X_test_resize_preprocess, Y_train, Y_test
 
         if (X_train.shape[3]==1):
             X_train = np.repeat(X_train, 3, -1)
             X_test = np.repeat(X_test, 3, -1)
-        return X_train, X_test, Y_train, Y_test
+
+        X_train_preprocess = np.zeros((X_train.shape[0], X_train.shape[1], X_train.shape[2], X_train.shape[3]),
+                                      dtype=np.float32)
+        X_test_preprocess = np.zeros((X_test.shape[0], X_test.shape[1], X_test.shape[2], X_test.shape[3]),
+                                     dtype=np.float32)
+        for i, x in enumerate(X_train):
+            x = tf.cast(x, tf.float32)
+            x = efn.preprocess_input(x)
+            X_train_preprocess[i] = x
+        for j, xt in enumerate(X_test):
+            xt = tf.cast(xt, tf.float32)
+            xt = efn.preprocess_input(xt)
+            X_test_preprocess[j] = xt
+        return X_train_preprocess, X_test_preprocess, Y_train, Y_test
 
     def build_model(self):
         if (self.tl):

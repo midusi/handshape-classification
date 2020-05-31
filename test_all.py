@@ -15,7 +15,6 @@ iteracion=1
 
 default_folder = Path.home() / 'handshape-classification' / 'Results'
 
-table=PrettyTable(["Dataset", "MobileNet", "DenseNet","EfficientNet"])
 for dataset_id in hd.ids():
     acc_avg_mo=np.zeros(iteracion)
     acc_avg_de=np.zeros(iteracion)
@@ -49,11 +48,3 @@ for dataset_id in hd.ids():
         efficientNet.graphics(model_eff, X_test, Y_test, show_graphic=True, show_matrix=True)
         acc_last_eff = efficientNet.get_result()
         acc_avg_eff[i] = acc_last_eff
-
-    table.add_row([dataset_id,acc_avg_mo.mean(), acc_avg_de.mean(),acc_avg_eff.mean()])
-    print("Accuracy values:")
-    print(table)
-data = table.get_string()
-file = os.path.join(default_folder, 'Accuracy_table.txt')
-with open(file, 'w') as f:
-    f.write(data)

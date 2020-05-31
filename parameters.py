@@ -14,7 +14,7 @@ thisdict_split ={
 }
 thisdict_batch_size_mobile =	{
   "lsa16": 32,
-  "Irish": 64,
+  "Irish": 32,
   "rwth": 64,
   "Ciarp": 64,
   "indianA":64,
@@ -22,16 +22,16 @@ thisdict_batch_size_mobile =	{
   "jsl": 64,
   "Nus1": 16,
   "Nus2": 32,
-  "psl": 32,
+  "psl": 64,
   "PugeaultASL_A":64,
-  "PugeaultASL_B":64,
+  "PugeaultASL_B":32,
 }
 thisdict_batch_size_dense =	{
   "lsa16": 32,
   "Irish": 32,
   "rwth": 32,
   "Ciarp": 32,
-  "indianA":32,
+  "indianA":64,
   "indianB":32,
   "jsl":32,
   "Nus1":32,
