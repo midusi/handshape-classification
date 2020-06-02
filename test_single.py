@@ -2,15 +2,16 @@ import experiment
 from Experiments import mobile_net as mn
 from Experiments import dense_net as dn
 from Experiments import efficient_net as en
+from Experiments import ganDiscriminator as gd
 import handshape_datasets as hd
 import parameters
 import numpy as np
 from prettytable import PrettyTable
 from pathlib import Path
-import os
+import math
 
 epochs=15
-dataset_id="indianA"
+dataset_id="lsa16"
 iteracion=1
 showgraphics=True
 transferl=True
@@ -19,9 +20,10 @@ default_folder = Path.home() / 'handshape-classification' / 'Results'
 acc_avg_eff=np.zeros(iteracion)
 acc_avg_mo=np.zeros(iteracion)
 acc_avg_de=np.zeros(iteracion)
+acc_avg_gd=np.zeros(iteracion)
 
 for i in range(iteracion):
-
+  """
   #MobileNet
   mobile = mn.MobileNet(epochs, parameters.get_batch_mobile(dataset_id), dataset_id,tl=transferl)
   model = mobile.build_model()
@@ -48,6 +50,15 @@ for i in range(iteracion):
   efficientNet.graphics(model, X_test, Y_test, show_graphic=showgraphics, show_matrix=showgraphics)
   acc_last_eff = efficientNet.get_result()
   acc_avg_eff[i] = acc_last_eff
+  """
+  # GanDiscriminator
+  gdm = gd.ganDiscriminator(epochs, parameters.get_batch_mobile(dataset_id), dataset_id, tl=transferl)
+  gdmodel = gdm.build_model()
+  X_train, X_test, Y_train, Y_test = gdm.split(parameters.get_split_value(dataset_id))
+  history = gdm.load(gdmodel, X_train, Y_train, X_test, Y_test)
+  gdm.graphics(gdmodel, X_test, Y_test, show_graphic=showgraphics, show_matrix=showgraphics)
+  acc_last_gd = gdm.get_result()
+  acc_avg_gd[i] = acc_last_gd
 
 
 

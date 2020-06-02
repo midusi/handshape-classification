@@ -1,3 +1,5 @@
+import math
+
 from keras.datasets import mnist
 from pathlib import Path
 from tensorflow.keras.optimizers import Adam
@@ -37,6 +39,7 @@ class GAN():
         self.img_cols = self.input_shape[1]
         self.channels = 3
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
+        self.classes = self.dataset[1]['y'].max() + 1
 
         self.name=dataset_id
 
@@ -50,21 +53,25 @@ class GAN():
 
         # Build and compile the generator
         self.generator = self.build_generator()
-        self.generator.compile(loss='binary_crossentropy', optimizer=optimizer)
+        noise = keras.layers.Input(shape=(100,))
+        label = keras.layers.Input(shape=(1,))
+        img = self.generator([noise, label])
+
+        #self.generator.compile(loss='binary_crossentropy', optimizer=optimizer)
 
         # The generator takes noise as input and generated imgs
-        z = keras.layers.Input(shape=(100,))
-        img = self.generator(z)
+        #z = keras.layers.Input(shape=(100,))
+        #img = self.generator(z)
 
         # For the combined model we will only train the generator
         self.discriminator.trainable = False
 
         # The valid takes generated images as input and determines validity
-        valid = self.discriminator(img)
+        valid = self.discriminator([img, label])
 
         # The combined model  (stacked generator and discriminator) takes
         # noise as input => generates images => determines validity
-        self.combined = Model(z, valid)
+        self.combined = Model([noise, label], valid)
         self.combined.compile(loss='binary_crossentropy', optimizer=optimizer)
         self.path = default_folder
         if not os.path.exists(self.path):
@@ -100,8 +107,29 @@ class GAN():
 
     def build_generator(self):
 
-        noise_shape = (100,)
+        noise_shape=(100,)
 
+        """
+        model = keras.models.Sequential(name='generator')
+        h, w, c = self.img_rows, self.img_cols, self.channels
+        filters = 128
+        # Imagen inicial de 7x7 (asumo que genero algo de 28x28)
+        image_dim = filters * h // 4 * w // 4
+        model.add(keras.layers.Dense(image_dim))
+        model.add(keras.layers.LeakyReLU(alpha=0.2))
+        model.add(keras.layers.Reshape((h // 4, w // 4, filters)))
+        model.add(keras.layers.Dense(256))
+        # Convertir a 14x14
+        model.add(keras.layers.Conv2DTranspose(filters, (4, 4), strides=(2, 2), padding='same'))
+        model.add(keras.layers.LeakyReLU(alpha=0.2))
+        model.add(keras.layers.Dense(512))
+        # Convertir a 28x28
+        model.add(keras.layers.Conv2DTranspose(filters, (4, 4), strides=(2, 2), padding='same'))
+        model.add(keras.layers.LeakyReLU(alpha=0.2))
+        #model.add(keras.layers.Dense(np.prod(self.img_shape), activation='tanh'))
+        # Imagen final de 28x28x1
+        model.add(keras.layers.Conv2D(c, (7, 7), activation='tanh', padding='same'))
+        """
         model = keras.models.Sequential()
 
         model.add(keras.layers.Dense(256, input_shape=noise_shape))
@@ -113,20 +141,44 @@ class GAN():
         model.add(keras.layers.Dense(1024))
         model.add(keras.layers.LeakyReLU(alpha=0.2))
         model.add(keras.layers.BatchNormalization(momentum=0.8))
+
         model.add(keras.layers.Dense(np.prod(self.img_shape), activation='tanh'))
         model.add(keras.layers.Reshape(self.img_shape))
 
+
         model.summary()
+        noise = keras.layers.Input(shape=(100,))
+        label = keras.layers.Input(shape=(1,), dtype='int32')
+        label_embedding = keras.layers.Flatten()(keras.layers.Embedding(self.classes, 100)(label))
 
-        noise = keras.layers.Input(shape=noise_shape)
-        img = model(noise)
+        model_input = keras.layers.multiply([noise, label_embedding])
+        img = model(model_input)
 
-        return Model(noise, img)
+        return Model([noise, label], img)
 
     def build_discriminator(self):
 
         img_shape = (self.img_rows, self.img_cols, self.channels)
+        """
+        base_model = keras.applications.mobilenet.MobileNet(input_shape=img_shape,
+                                                            weights=None,alpha=0.1,
+                                                            depth_multiplier=1,
+                                                            include_top=False)
 
+        output = base_model.output
+        #output=keras.layers.Flatten(input_shape=img_shape)(output)
+        output=(keras.layers.Dense(512))(output)
+        output=(keras.layers.LeakyReLU(alpha=0.2))(output)
+        output=(keras.layers.Dense(256))(output)
+
+        output=(keras.layers.LeakyReLU(alpha=0.2))(output)
+
+        output = keras.layers.GlobalAveragePooling2D()(output)
+        output = (keras.layers.Dense(1, activation='sigmoid'))(output)
+        model = Model(inputs=base_model.input, outputs=output)
+        """
+
+        """
         model = keras.models.Sequential()
 
         model.add(keras.layers.Flatten(input_shape=img_shape))
@@ -135,12 +187,53 @@ class GAN():
         model.add(keras.layers.Dense(256))
         model.add(keras.layers.LeakyReLU(alpha=0.2))
         model.add(keras.layers.Dense(1, activation='sigmoid'))
+
         model.summary()
 
-        img = keras.layers.Input(shape=img_shape)
-        validity = model(img)
+        #img = keras.layers.Input(shape=img_shape)
+        #validity = model(img)
+        #return Model(img, validity)
+        
+        new_shape=X_train_preprocess.shape[1]*X_train_preprocess.shape[2]*X_train_preprocess.shape[3]
+        X_train_preprocess_gan = np.array((new_shape))
+        X_train_preprocess_gan_tot=np.array((X_train_preprocess.shape[0],new_shape))
+        for i,x in enumerate(X_train_preprocess):
+            for xi in x:
+                X_train_preprocess_gan=np.append(X_train_preprocess_gan,xi)
+            X_train_preprocess_gan_tot[i]=X_train_preprocess_gan
 
-        return Model(img, validity)
+        print(X_train_preprocess_gan)
+        X_train_preprocess=np.prod(np.prod(X_train_preprocess))
+        X_test_preprocess=np.prod(X_train_preprocess)
+        """
+
+        model = keras.models.Sequential(name="discriminator")
+
+        model.add(keras.layers.Dense(512, input_dim=np.prod(self.img_shape)))
+        model.add(keras.layers.LeakyReLU(alpha=0.2))
+        model.add(keras.layers.Dense(512))
+        model.add(keras.layers.LeakyReLU(alpha=0.2))
+        model.add(keras.layers.Dropout(0.4))
+        model.add(keras.layers.Dense(512))
+        model.add(keras.layers.LeakyReLU(alpha=0.2))
+        model.add(keras.layers.Dropout(0.4))
+        model.add(keras.layers.Dense(1, activation='sigmoid'))
+        model.summary()
+
+        img = keras.layers.Input(shape=self.img_shape)
+        label = keras.layers.Input(shape=(1,), dtype='int32')
+
+        label_embedding = keras.layers.Flatten()(keras.layers.Embedding(self.classes, np.prod(self.img_shape))(label))
+        flat_img = keras.layers.Flatten()(img)
+
+        model_input = keras.layers.multiply([flat_img, label_embedding])
+
+        validity = model(model_input)
+        model.save_weights(os.path.join(default_folder,"GANdiscriminator_weights.h5"))
+        model.save(os.path.join(default_folder,'GANdiscriminator.h5'))
+        print("Saved model to disk")
+
+        return Model([img, label], validity)
 
     def train(self, dataset_id,epochs, batch_size=128, save_interval=50):
 
@@ -152,7 +245,10 @@ class GAN():
         X_train = (X_train.astype(np.float32) - 127.5) / 127.5
         #X_train = np.expand_dims(X_train, axis=3)
 
-        half_batch = int(batch_size / 2)
+        #half_batch = int(batch_size / 2)
+
+        valid = np.ones((batch_size, 1))
+        fake = np.zeros((batch_size, 1))
 
         for epoch in range(epochs):
 
@@ -161,32 +257,31 @@ class GAN():
             # ---------------------
 
             # Select a random half batch of images
-            idx = np.random.randint(0, X_train.shape[0], half_batch)
-            imgs = X_train[idx]
+            idx = np.random.randint(0, X_train.shape[0], batch_size)
+            imgs, labels = X_train[idx], Y_train[idx]
 
-            noise = np.random.normal(0, 1, (half_batch, 100))
+            noise = np.random.normal(0, 1, (batch_size, 100))
 
             # Generate a half batch of new images
-            gen_imgs = self.generator.predict(noise)
+            gen_imgs = self.generator.predict([noise, labels])
 
             # Train the discriminator
-            d_loss_real = self.discriminator.train_on_batch(imgs, np.ones((half_batch, 1)))
-            d_loss_fake = self.discriminator.train_on_batch(gen_imgs, np.zeros((half_batch, 1)))
+            d_loss_real = self.discriminator.train_on_batch([imgs, labels], valid)
+            d_loss_fake = self.discriminator.train_on_batch([gen_imgs, labels], fake)
             d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
 
             # ---------------------
             #  Train Generator
             # ---------------------
-
-            noise = np.random.normal(0, 1, (batch_size, 100))
+            sampled_labels = np.random.randint(0, 10, batch_size).reshape(-1, 1)
 
             # The generator wants the discriminator to label the generated samples
             # as valid (ones)
-            valid_y = np.array([1] * batch_size)
+            #valid_y = np.array([1] * batch_size)
 
             # Train the generator
-            g_loss = self.combined.train_on_batch(noise, valid_y)
+            g_loss = self.combined.train_on_batch([noise, sampled_labels], valid)
 
             # Plot the progress
             print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss))
@@ -196,9 +291,16 @@ class GAN():
                 self.save_imgs(epoch)
 
     def save_imgs(self, epoch):
-        r, c = 5, 5
-        noise = np.random.normal(0, 1, (r * c, 100))
-        gen_imgs = self.generator.predict(noise)
+        sqr_classes = math.sqrt(self.classes)
+        if (sqr_classes % 1 > 0):
+            sqr_classes = int(sqr_classes) + 1
+        else:
+            sqr_classes = int(sqr_classes)
+
+        r, c = int(sqr_classes), int(sqr_classes)
+        noise = np.random.normal(0, 1, (r*c, 100))
+        sampled_labels = np.arange(0, r*c).reshape(-1, 1)
+        gen_imgs = self.generator.predict([noise, sampled_labels])
 
         # Rescale images 0 - 1
         gen_imgs = 0.5 * gen_imgs + 0.5
@@ -210,6 +312,10 @@ class GAN():
                 axs[i,j].imshow(gen_imgs[cnt,:])
                 axs[i,j].axis('off')
                 cnt += 1
+                if(cnt>self.classes):
+                    axs[i, j].set_visible(False)
+            if (cnt > self.classes):
+                axs[i, j].set_visible(False)
         save_path=os.path.join(self.path,self.name)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
