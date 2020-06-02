@@ -11,6 +11,8 @@ from experiment import Experiment
 from prettytable import PrettyTable
 from sklearn import model_selection
 from pathlib import Path
+from keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D
+from keras.layers import Activation, Dropout, Flatten, Dense
 
 gan_folder = Path.home() / 'handshape-classification' / 'GANResults'
 
@@ -52,11 +54,7 @@ class ganDiscriminator(Experiment):
         return self.history
 
     def load(self, model, X_train, Y_train, X_test, Y_test):
-        #newshape= X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
-        #X_train=np.reshape(X_train,(X_train.shape[0],newshape))
-        #X_test = np.reshape(X_test, (X_test.shape[0], newshape))
-        #print(X_train.shape)
-        #print(X_test.shape)
+
         self.history = model.fit(X_train, Y_train, batch_size=self.batch_size, epochs=self.epochs,
                                  validation_data=(X_test, Y_test))
 
@@ -157,14 +155,80 @@ class ganDiscriminator(Experiment):
             xt = keras.applications.mobilenet.preprocess_input(xt)
             X_test_preprocess[j] = xt
 
+        newshape = X_train.shape[1] * X_train.shape[2] * X_train.shape[3]
+        X_train_preprocess = np.reshape(X_train_preprocess, (X_train.shape[0], newshape))
+        X_test_preprocess = np.reshape(X_test_preprocess, (X_test.shape[0], newshape))
 
         return X_train_preprocess, X_test_preprocess, Y_train, Y_test
 
     def build_model(self):
 
-        model = load_model(os.path.join(gan_folder,"GANdiscriminator.h5"))
+        #model = load_model(os.path.join(gan_folder,"GANdiscriminator.h5"))
+
+        model = keras.models.Sequential(name="discriminator")
+        model.add(keras.layers.Dense(512, input_dim=np.prod(self.input_shape)))
+        model.add(keras.layers.LeakyReLU(alpha=0.2))
+        model.add(keras.layers.Dense(512))
+        model.add(keras.layers.LeakyReLU(alpha=0.2))
+        model.add(keras.layers.Dropout(0.4))
+        model.add(keras.layers.Dense(512))
+        model.add(keras.layers.LeakyReLU(alpha=0.2))
+        model.add(keras.layers.Dropout(0.4))
+        model.add(keras.layers.Dense(1, activation='sigmoid'))
+
+        model.add(keras.layers.Dense(self.classes, activation='softmax'))
+
+        """
+        top_model = keras.models.Sequential()
+        top_model.add(ZeroPadding2D((1, 1), input_shape=self.input_shape))
+        top_model.add(Conv2D(64, (3, 3), activation='relu'))
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(64, (3, 3), activation='relu'))
+        top_model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(128, (3, 3), activation='relu'))
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(128, (3, 3), activation='relu'))
+        top_model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(256, (3, 3), activation='relu'))
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(256, (3, 3), activation='relu'))
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(256, (3, 3), activation='relu'))
+        top_model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(512, (3, 3), activation='relu'))
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(512, (3, 3), activation='relu'))
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(512, (3, 3), activation='relu'))
+        top_model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(512, (3, 3), activation='relu'))
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(512, (3, 3), activation='relu'))
+        top_model.add(ZeroPadding2D((1, 1)))
+        top_model.add(Conv2D(512, (3, 3), activation='relu'))
+        top_model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+        top_model.add(Flatten())
+
+        top_model.add(Dense(4096, activation='relu'))
+        top_model.add(Dropout(0.5))
+        top_model.add(Dense(self.classes))
+        top_model.add(Activation('softmax'))
+        """
+        #model.load_weights(os.path.join(gan_folder, "GANdiscriminator_weights.h5"))
         #model.add(keras.layers.Reshape(self.input_shape))
-        model.load_weights(os.path.join(gan_folder,"GANdiscriminator_weights.h5"))
+
+
+        #model.summary()
+
+
         #model.summary()
 
         model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])

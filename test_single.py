@@ -52,7 +52,7 @@ for i in range(iteracion):
   acc_avg_eff[i] = acc_last_eff
   """
   # GanDiscriminator
-  gdm = gd.ganDiscriminator(epochs, parameters.get_batch_mobile(dataset_id), dataset_id, tl=transferl)
+  gdm = gd.ganDiscriminator(1000, parameters.get_batch_mobile(dataset_id), dataset_id, tl=transferl)
   gdmodel = gdm.build_model()
   X_train, X_test, Y_train, Y_test = gdm.split(parameters.get_split_value(dataset_id))
   history = gdm.load(gdmodel, X_train, Y_train, X_test, Y_test)
