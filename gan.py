@@ -109,13 +109,13 @@ class GAN():
 
         noise_shape=(100,)
 
-        """
+
         model = keras.models.Sequential(name='generator')
         h, w, c = self.img_rows, self.img_cols, self.channels
-        filters = 128
+        filters = 128 #256
         # Imagen inicial de 7x7 (asumo que genero algo de 28x28)
         image_dim = filters * h // 4 * w // 4
-        model.add(keras.layers.Dense(image_dim))
+        model.add(keras.layers.Dense(image_dim, input_shape=noise_shape))
         model.add(keras.layers.LeakyReLU(alpha=0.2))
         model.add(keras.layers.Reshape((h // 4, w // 4, filters)))
         model.add(keras.layers.Dense(256))
@@ -144,7 +144,7 @@ class GAN():
 
         model.add(keras.layers.Dense(np.prod(self.img_shape), activation='tanh'))
         model.add(keras.layers.Reshape(self.img_shape))
-
+        """
 
         model.summary()
         noise = keras.layers.Input(shape=(100,))
@@ -194,17 +194,6 @@ class GAN():
         #validity = model(img)
         #return Model(img, validity)
         
-        new_shape=X_train_preprocess.shape[1]*X_train_preprocess.shape[2]*X_train_preprocess.shape[3]
-        X_train_preprocess_gan = np.array((new_shape))
-        X_train_preprocess_gan_tot=np.array((X_train_preprocess.shape[0],new_shape))
-        for i,x in enumerate(X_train_preprocess):
-            for xi in x:
-                X_train_preprocess_gan=np.append(X_train_preprocess_gan,xi)
-            X_train_preprocess_gan_tot[i]=X_train_preprocess_gan
-
-        print(X_train_preprocess_gan)
-        X_train_preprocess=np.prod(np.prod(X_train_preprocess))
-        X_test_preprocess=np.prod(X_train_preprocess)
         """
 
         model = keras.models.Sequential(name="discriminator")
@@ -217,6 +206,7 @@ class GAN():
         model.add(keras.layers.Dense(512))
         model.add(keras.layers.LeakyReLU(alpha=0.2))
         model.add(keras.layers.Dropout(0.4))
+
         model.add(keras.layers.Dense(1, activation='sigmoid'))
         model.summary()
 

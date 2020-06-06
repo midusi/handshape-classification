@@ -174,9 +174,9 @@ class ganDiscriminator(Experiment):
         model.add(keras.layers.Dense(512))
         model.add(keras.layers.LeakyReLU(alpha=0.2))
         model.add(keras.layers.Dropout(0.4))
-        model.add(keras.layers.Dense(1, activation='sigmoid'))
+        model.add(keras.layers.Dense(self.classes, activation='sigmoid'))
 
-        model.add(keras.layers.Dense(self.classes, activation='softmax'))
+        #model.add(keras.layers.Dense(self.classes, activation='softmax'))
 
         """
         top_model = keras.models.Sequential()
