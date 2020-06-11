@@ -43,8 +43,6 @@ for dataset_id in hd.ids():
             filter(lambda x: f"{dataset_id}_{model}_batch{batch_size}_epochs{epochs}_noTL" in x,
                    listdir(model_path)))
 
-        print(subsets_folders_noTL)
-        """
         folder_act_noTL = os.path.join(model_path, subsets_folders_noTL[0])
         acc_history_path_noTL = os.path.join(folder_act_noTL, "acc_history.txt")
         val_acc_history_path_noTL = os.path.join(folder_act_noTL, "val_acc_history.txt")
@@ -55,7 +53,6 @@ for dataset_id in hd.ids():
             lines = f.readlines()
             val_acc_value_noTL[i] = lines[len(lines) - 1]
 
-        """
         folder_act = os.path.join(model_path, subsets_folders_TL[0])
         acc_history_path = os.path.join(folder_act, "acc_history.txt")
         val_acc_history_path = os.path.join(folder_act, "val_acc_history.txt")
@@ -83,11 +80,11 @@ data_test= table_test.get_string()
 data_noTL = table_noTL.get_string()
 data_test_noTL= table_test_noTL.get_string()
 
-file_noTL = os.path.join(default_folder, 'Accuracy_table.txt')
+file_noTL = os.path.join(default_folder, 'Accuracy_table_noTL.txt')
 with open(file_noTL, 'w') as f:
    f.write(data_noTL)
 
-file_test_noTL = os.path.join(default_folder, 'val_test_Accuracy_table.txt')
+file_test_noTL = os.path.join(default_folder, 'val_test_Accuracy_table_noTL.txt')
 with open(file_test_noTL, 'w') as f:
    f.write(data_test_noTL)
 

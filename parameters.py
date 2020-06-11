@@ -39,7 +39,7 @@ thisdict_batch_size_dense =	{
   "psl":32,
   "PugeaultASL_A":32,
   "PugeaultASL_B":32,
-}#
+}
 
 thisdict_batch_size_eff =	{
   "lsa16": 32,

@@ -2,6 +2,7 @@ import math
 
 from keras.datasets import mnist
 from pathlib import Path
+from skimage import transform
 from tensorflow.keras.optimizers import Adam
 import numpy as np
 import keras.layers
@@ -35,12 +36,14 @@ class GAN():
                     self.dataset = hd.load(dataset_id)
 
         self.input_shape = self.dataset[0][0].shape
-        self.img_rows = self.input_shape[0]
-        self.img_cols = self.input_shape[1]
+
+        self.img_rows = (self.input_shape[0] // 4) * 4
+        self.img_cols = (self.input_shape[1] // 4) * 4
+
         self.channels = 3
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
         self.classes = self.dataset[1]['y'].max() + 1
-
+        self.noise_value=100
         self.name=dataset_id
 
         optimizer = Adam(0.0002, 0.5)
@@ -53,7 +56,7 @@ class GAN():
 
         # Build and compile the generator
         self.generator = self.build_generator()
-        noise = keras.layers.Input(shape=(100,))
+        noise = keras.layers.Input(shape=(self.noise_value,))
         label = keras.layers.Input(shape=(1,))
         img = self.generator([noise, label])
 
@@ -93,9 +96,13 @@ class GAN():
                 if (cla == j):
                     y_new = np.append(y_new, cla)
                     pos = np.append(pos, k)
-        x_new = np.zeros((len(y_new), input_shape[0], input_shape[1], input_shape[2]), dtype='uint8')
+        x_new = np.zeros((len(y_new), self.img_rows, self.img_cols, input_shape[2]), dtype='uint8')
         for (i, index) in enumerate(pos):
-            x_new[i] = x[index]
+            if((x[index].shape[0]%4 != 0) or (x[index].shape[1]%4 != 0)):
+                x_new[i]=transform.resize(x[index], (self.img_rows, self.img_cols), preserve_range=True, mode="reflect",
+                                                 anti_aliasing=True)
+            else:
+                x_new[i] = x[index]
         X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(x_new, y_new,
                                                                                     test_size=test_size,
                                                                                     stratify=y_new)
@@ -107,7 +114,7 @@ class GAN():
 
     def build_generator(self):
 
-        noise_shape=(100,)
+        noise_shape=(self.noise_value,)
 
 
         model = keras.models.Sequential(name='generator')
@@ -147,9 +154,9 @@ class GAN():
         """
 
         model.summary()
-        noise = keras.layers.Input(shape=(100,))
+        noise = keras.layers.Input(shape=(self.noise_value,))
         label = keras.layers.Input(shape=(1,), dtype='int32')
-        label_embedding = keras.layers.Flatten()(keras.layers.Embedding(self.classes, 100)(label))
+        label_embedding = keras.layers.Flatten()(keras.layers.Embedding(self.classes, self.noise_value)(label))
 
         model_input = keras.layers.multiply([noise, label_embedding])
         img = model(model_input)
@@ -195,6 +202,23 @@ class GAN():
         #return Model(img, validity)
         
         """
+        model = keras.models.Sequential(name="discriminator")
+
+
+        model.add(keras.layers.Conv2D(64, (5, 5), strides=(2, 2), padding='same', input_shape=self.img_shape))
+        model.add(keras.layers.LeakyReLU())
+        model.add(keras.layers.Dense(512))
+        model.add(keras.layers.Dropout(0.3))
+    
+        model.add(keras.layers.Conv2D(128, (5, 5), strides=(2, 2), padding='same'))
+        model.add(keras.layers.LeakyReLU())
+        model.add(keras.layers.Dense(256))
+        model.add(keras.layers.Dropout(0.3))
+
+        model.add(keras.layers.Flatten())
+        model.add(keras.layers.Dense(1, activation='sigmoid'))
+
+        """
 
         model = keras.models.Sequential(name="discriminator")
 
@@ -208,6 +232,7 @@ class GAN():
         model.add(keras.layers.Dropout(0.4))
 
         model.add(keras.layers.Dense(1, activation='sigmoid'))
+         """
         model.summary()
 
         img = keras.layers.Input(shape=self.img_shape)
@@ -217,11 +242,12 @@ class GAN():
         flat_img = keras.layers.Flatten()(img)
 
         model_input = keras.layers.multiply([flat_img, label_embedding])
+        model_input = keras.layers.Reshape(self.img_shape)(model_input)
 
         validity = model(model_input)
-        model.save_weights(os.path.join(default_folder,"GANdiscriminator_weights.h5"))
-        model.save(os.path.join(default_folder,'GANdiscriminator.h5'))
-        print("Saved model to disk")
+        #model.save_weights(os.path.join(default_folder,"GANdiscriminator_weights.h5"))
+        #model.save(os.path.join(default_folder,'GANdiscriminator.h5'))
+        #print("Saved model to disk")
 
         return Model([img, label], validity)
 
@@ -250,7 +276,7 @@ class GAN():
             idx = np.random.randint(0, X_train.shape[0], batch_size)
             imgs, labels = X_train[idx], Y_train[idx]
 
-            noise = np.random.normal(0, 1, (batch_size, 100))
+            noise = np.random.normal(0, 1, (batch_size, self.noise_value))
 
             # Generate a half batch of new images
             gen_imgs = self.generator.predict([noise, labels])
@@ -288,7 +314,7 @@ class GAN():
             sqr_classes = int(sqr_classes)
 
         r, c = int(sqr_classes), int(sqr_classes)
-        noise = np.random.normal(0, 1, (r*c, 100))
+        noise = np.random.normal(0, 1, (r*c, self.noise_value))
         sampled_labels = np.arange(0, r*c).reshape(-1, 1)
         gen_imgs = self.generator.predict([noise, sampled_labels])
 
@@ -311,9 +337,3 @@ class GAN():
             os.makedirs(save_path)
         fig.savefig(os.path.join(save_path, f"GANimage_{epoch}.png"))
         plt.close()
-
-"""
-if __name__ == '__main__':
-    gan = GAN()
-    gan.train(epochs=30000, batch_size=32, save_interval=200)
-"""

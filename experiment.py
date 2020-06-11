@@ -24,7 +24,7 @@ class Experiment(ABC):
         self.epochs=epochs
         self.batch_size=batch_size
         self.model=model
-        self.dataset=dataset
+        self.dataset_id=dataset
         self.path1 = os.path.join(default_folder,self.model)
         if not os.path.exists(self.path1):
             logging.info(f"Create folder {self.path1}")
