@@ -121,7 +121,7 @@ class GAN():
         h, w, c = self.img_rows, self.img_cols, self.channels
         filters = 128 #256
         # Imagen inicial de 7x7 (asumo que genero algo de 28x28)
-        image_dim = filters * h // 4 * w // 4
+        image_dim = filters * (h // 4) * (w // 4)
         model.add(keras.layers.Dense(image_dim, input_shape=noise_shape))
         model.add(keras.layers.LeakyReLU(alpha=0.2))
         model.add(keras.layers.Reshape((h // 4, w // 4, filters)))
@@ -165,7 +165,6 @@ class GAN():
 
     def build_discriminator(self):
 
-        img_shape = (self.img_rows, self.img_cols, self.channels)
         """
         base_model = keras.applications.mobilenet.MobileNet(input_shape=img_shape,
                                                             weights=None,alpha=0.1,
@@ -203,7 +202,6 @@ class GAN():
         
         """
         model = keras.models.Sequential(name="discriminator")
-
 
         model.add(keras.layers.Conv2D(64, (5, 5), strides=(2, 2), padding='same', input_shape=self.img_shape))
         model.add(keras.layers.LeakyReLU())
@@ -245,9 +243,7 @@ class GAN():
         model_input = keras.layers.Reshape(self.img_shape)(model_input)
 
         validity = model(model_input)
-        #model.save_weights(os.path.join(default_folder,"GANdiscriminator_weights.h5"))
-        #model.save(os.path.join(default_folder,'GANdiscriminator.h5'))
-        #print("Saved model to disk")
+
 
         return Model([img, label], validity)
 
@@ -286,7 +282,6 @@ class GAN():
             d_loss_fake = self.discriminator.train_on_batch([gen_imgs, labels], fake)
             d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
-
             # ---------------------
             #  Train Generator
             # ---------------------
@@ -305,6 +300,10 @@ class GAN():
             # If at save interval => save generated image samples
             if epoch % save_interval == 0:
                 self.save_imgs(epoch)
+        save_path = os.path.join(self.path, self.name)
+        self.discriminator.save(os.path.join(save_path,f"{self.name}_GANdiscriminator.h5"))
+        self.discriminator.save_weights(os.path.join(save_path,f"{self.name}_GANdiscriminator_weights.h5"))
+        print("Saved model to disk")
 
     def save_imgs(self, epoch):
         sqr_classes = math.sqrt(self.classes)
