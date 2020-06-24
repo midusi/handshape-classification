@@ -1,3 +1,5 @@
+from os import listdir
+
 import numpy as np
 import keras
 from keras.models import Model
@@ -20,9 +22,16 @@ gan_folder = Path.home() / 'handshape-classification' / 'GANResults'
 class ganDiscriminator(Experiment):
 
     def __init__(self, epochs, batch_size, dataset_id, **kwargs):
-
-        super().__init__("ganDiscriminator", dataset_id, epochs, batch_size)
         self.tl = True
+
+        load_path = os.path.join(gan_folder, dataset_id)
+        files = list(
+            filter(lambda x: ".h5" in x,
+                   listdir(load_path)))
+        init = files[0][:].find("discriminator") + 13
+        epochs_ganTraining = files[0][init:-3]
+
+        super().__init__(f"ganDiscriminator", f"{dataset_id}_{epochs_ganTraining}", epochs, batch_size)
         if 'version' in kwargs:
             ver=kwargs['version']
         if 'delete' in kwargs:
@@ -37,9 +46,9 @@ class ganDiscriminator(Experiment):
                     self.dataset=hd.load(dataset_id, delete=supr)
                 except:
                     self.dataset = hd.load(dataset_id)
-        self.model_name = "ganDiscriminator"
+        self.model_name = f"ganDiscriminator{epochs_ganTraining}"
         self.input_shape = self.dataset[0][0].shape
-
+        self.dataset_id=dataset_id
         if (self.dataset_id == "indianA"):
             self.input_shape = (64, 64, self.input_shape[2])
         if (self.dataset_id == "indianB"):
@@ -55,8 +64,8 @@ class ganDiscriminator(Experiment):
 
     def load(self, model, X_train, Y_train, X_test, Y_test):
 
-        self.history = model.fit([X_train, Y_train], Y_train, batch_size=self.batch_size, epochs=self.epochs,
-                                 validation_data=([X_test,Y_test], Y_test))
+        self.history = model.fit(X_train, Y_train, batch_size=self.batch_size, epochs=self.epochs,
+                                 validation_data=(X_test, Y_test))
 
         return self.history
 
@@ -155,30 +164,19 @@ class ganDiscriminator(Experiment):
         return X_train_preprocess, X_test_preprocess, Y_train, Y_test
 
     def build_model(self):
-
+        img = keras.layers.Input(shape=(self.input_shape[0],self.input_shape[1],3))
         load_path = os.path.join(gan_folder,self.dataset_id)
-
-        prev_model = load_model(os.path.join(load_path,f"{self.dataset_id}_GANdiscriminator.h5"))
-        prev_model.load_weights(os.path.join(load_path, f"{self.dataset_id}_GANdiscriminator_weights.h5"))
-
+        files = list(
+            filter(lambda x: ".h5" in x,
+                   listdir(load_path)))
+        prev_model = load_model(os.path.join(load_path, files[0]))
+        prev_model.load_weights(os.path.join(load_path, files[1]))
 
         top_model = keras.models.Sequential()
-        #top_model.add(Dense(256, activation='relu'))
-        #top_model.add(Dropout(0.5))
         top_model.add(Dense(self.classes, activation='softmax'))
 
-        model = Model(inputs=prev_model.input, outputs=top_model(prev_model.output))
-        model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
-
-
-        #model= keras.models.Sequential()
-        #model.add(prev_model)
-        #model.load_weights(os.path.join(load_path,f"{self.dataset_id}_GANdiscriminator_weights.h5"))
-
-        #model.add(keras.layers.Dense(self.classes, activation='softmax'))
-        #model.load_weights(os.path.join(gan_folder, "GANdiscriminator_weights.h5"))
-        #model.add(keras.layers.Reshape(self.input_shape))
+        model = Model(inputs=img, outputs=top_model(prev_model(img)))
+        model.compile(loss='sparse_categorical_crossentropy', optimizer='Adam', metrics=['accuracy'])
 
         return model
 
@@ -194,5 +192,5 @@ class ganDiscriminator(Experiment):
             print("Maybe you should make zoom in the save file")
 
         graphic_matrix = os.path.join(path, "matrix_confusion.png")
-        y_pred = model.predict([X_test,y_true])
+        y_pred = model.predict(X_test)
         self.plot_confusion_matrix(y_true, np.argmax(y_pred, axis = 1),graphic_matrix,show_matrix)

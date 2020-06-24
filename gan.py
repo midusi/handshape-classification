@@ -1,4 +1,5 @@
 import math
+from PIL import Image
 
 from keras.datasets import mnist
 from pathlib import Path
@@ -11,6 +12,7 @@ import matplotlib.pyplot as plt
 import sklearn
 import handshape_datasets as hd
 import parameters
+from keras.models import load_model
 import os
 from sklearn import model_selection
 import handshape_datasets
@@ -41,15 +43,26 @@ class GAN():
         self.img_cols = (self.input_shape[1] // 4) * 4
 
         self.channels = 3
-        self.img_shape = (self.img_rows, self.img_cols, self.channels)
+        self.name = dataset_id
+        if(self.name=="psl" or self.name=="indianB"):
+            self.img_shape=(128,128,self.channels)
+            self.img_rows = 128
+            self.img_cols = 128
+        else:
+            if(self.name=="indianA"):
+                self.img_shape=(64,64,self.channels)
+                self.img_rows = 64
+                self.img_cols = 64
+            else:
+                self.img_shape = (self.img_rows, self.img_cols, self.channels)
         self.classes = self.dataset[1]['y'].max() + 1
         self.noise_value=100
-        self.name=dataset_id
+
 
         optimizer = Adam(0.0002, 0.5)
 
         # Build and compile the discriminator
-        self.discriminator = self.build_discriminator()
+        self.base_model, self.discriminator = self.build_discriminator()
         self.discriminator.compile(loss='binary_crossentropy',
             optimizer=optimizer,
             metrics=['accuracy'])
@@ -96,16 +109,52 @@ class GAN():
                 if (cla == j):
                     y_new = np.append(y_new, cla)
                     pos = np.append(pos, k)
-        x_new = np.zeros((len(y_new), self.img_rows, self.img_cols, input_shape[2]), dtype='uint8')
+        x_new = np.zeros((len(y_new), input_shape[0], input_shape[1], self.channels), dtype='uint8')
+
+        if (self.name == "indianA"):
+            X_new_resize = np.zeros((len(y_new), 64, 64, self.input_shape[2]))
+        if (self.name == "indianB"):
+            X_new_resize = np.zeros((len(y_new), 128, 128, self.channels))
+        if (self.name == "psl"):
+            X_new_resize = np.zeros((len(y_new), 128, 128, self.channels))
+
+
         for (i, index) in enumerate(pos):
-            if((x[index].shape[0]%4 != 0) or (x[index].shape[1]%4 != 0)):
-                x_new[i]=transform.resize(x[index], (self.img_rows, self.img_cols), preserve_range=True, mode="reflect",
-                                                 anti_aliasing=True)
+            x_new[i] = self.dataset[0][index]
+            if (self.name == "indianA" or self.name == "indianB" or self.name=="psl"):
+                if (self.name == "indianA"):
+                    image = transform.resize(x_new[i], (480, 640), preserve_range=True, mode="reflect",
+                                             anti_aliasing=True)
+                    image = Image.fromarray(image.astype(np.uint8), )
+
+                    left = 20
+                    top = 150.0
+                    right = 550
+                    bottom = 425.0
+                    img = image.crop((left, top, right, bottom))
+                    img2 = np.asarray(img)
+                    X_new_resize[i] = transform.resize(img2, (64, 64), preserve_range=True, mode="reflect",
+                                                       anti_aliasing=True)
+                else:
+                    X_new_resize[i] = transform.resize(x_new[i], (128, 128), preserve_range=True, mode="reflect",
+                                                       anti_aliasing=True)
             else:
-                x_new[i] = x[index]
-        X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(x_new, y_new,
-                                                                                    test_size=test_size,
-                                                                                    stratify=y_new)
+                if ((x[index].shape[0] % 4 != 0) or (x[index].shape[1] % 4 != 0)):
+                    x_new[i] = transform.resize(x[index], (self.img_rows, self.img_cols), preserve_range=True,
+                                                mode="reflect",
+                                                anti_aliasing=True)
+                else:
+                    x_new[i] = x[index]
+        if (self.name == "indianA" or self.name == "indianB" or self.name=="psl"):
+            X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(X_new_resize, y_new,
+                                                                                            test_size=test_size,
+                                                                                            stratify=y_new)
+        else:
+            X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(x_new, y_new,
+                                                                                            test_size=test_size,
+                                                                                            stratify=y_new)
+
+
         if (X_train.shape[3] == 1):
             X_train = np.repeat(X_train, 3, -1)
             X_test = np.repeat(X_test, 3, -1)
@@ -119,7 +168,7 @@ class GAN():
 
         model = keras.models.Sequential(name='generator')
         h, w, c = self.img_rows, self.img_cols, self.channels
-        filters = 128 #256
+        filters = 256 #256
         # Imagen inicial de 7x7 (asumo que genero algo de 28x28)
         image_dim = filters * (h // 4) * (w // 4)
         model.add(keras.layers.Dense(image_dim, input_shape=noise_shape))
@@ -165,56 +214,19 @@ class GAN():
 
     def build_discriminator(self):
 
-        """
-        base_model = keras.applications.mobilenet.MobileNet(input_shape=img_shape,
-                                                            weights=None,alpha=0.1,
-                                                            depth_multiplier=1,
-                                                            include_top=False)
-
-        output = base_model.output
-        #output=keras.layers.Flatten(input_shape=img_shape)(output)
-        output=(keras.layers.Dense(512))(output)
-        output=(keras.layers.LeakyReLU(alpha=0.2))(output)
-        output=(keras.layers.Dense(256))(output)
-
-        output=(keras.layers.LeakyReLU(alpha=0.2))(output)
-
-        output = keras.layers.GlobalAveragePooling2D()(output)
-        output = (keras.layers.Dense(1, activation='sigmoid'))(output)
-        model = Model(inputs=base_model.input, outputs=output)
-        """
-
-        """
-        model = keras.models.Sequential()
-
-        model.add(keras.layers.Flatten(input_shape=img_shape))
-        model.add(keras.layers.Dense(512))
-        model.add(keras.layers.LeakyReLU(alpha=0.2))
-        model.add(keras.layers.Dense(256))
-        model.add(keras.layers.LeakyReLU(alpha=0.2))
-        model.add(keras.layers.Dense(1, activation='sigmoid'))
-
-        model.summary()
-
-        #img = keras.layers.Input(shape=img_shape)
-        #validity = model(img)
-        #return Model(img, validity)
-        
-        """
         model = keras.models.Sequential(name="discriminator")
 
-        model.add(keras.layers.Conv2D(64, (5, 5), strides=(2, 2), padding='same', input_shape=self.img_shape))
+        model.add(keras.layers.Conv2D(32, (5, 5), strides=(2, 2), padding='same'))
         model.add(keras.layers.LeakyReLU())
         model.add(keras.layers.Dense(512))
         model.add(keras.layers.Dropout(0.3))
     
-        model.add(keras.layers.Conv2D(128, (5, 5), strides=(2, 2), padding='same'))
+        model.add(keras.layers.Conv2D(64, (5, 5), strides=(2, 2), padding='same'))
         model.add(keras.layers.LeakyReLU())
         model.add(keras.layers.Dense(256))
         model.add(keras.layers.Dropout(0.3))
 
-        model.add(keras.layers.Flatten())
-        model.add(keras.layers.Dense(1, activation='sigmoid'))
+        model.add(keras.layers.GlobalAveragePooling2D())
 
         """
 
@@ -230,8 +242,7 @@ class GAN():
         model.add(keras.layers.Dropout(0.4))
 
         model.add(keras.layers.Dense(1, activation='sigmoid'))
-         """
-        model.summary()
+        """
 
         img = keras.layers.Input(shape=self.img_shape)
         label = keras.layers.Input(shape=(1,), dtype='int32')
@@ -243,9 +254,10 @@ class GAN():
         model_input = keras.layers.Reshape(self.img_shape)(model_input)
 
         validity = model(model_input)
+        discriminator=keras.layers.Dense(1, activation='sigmoid')(validity)
+        discriminator=Model(inputs=[img,label],outputs=discriminator)
 
-
-        return Model([img, label], validity)
+        return model, discriminator
 
     def train(self, dataset_id,epochs, batch_size=128, save_interval=50):
 
@@ -285,7 +297,7 @@ class GAN():
             # ---------------------
             #  Train Generator
             # ---------------------
-            sampled_labels = np.random.randint(0, 10, batch_size).reshape(-1, 1)
+            sampled_labels = np.random.randint(0, self.classes, batch_size).reshape(-1, 1)
 
             # The generator wants the discriminator to label the generated samples
             # as valid (ones)
@@ -300,9 +312,9 @@ class GAN():
             # If at save interval => save generated image samples
             if epoch % save_interval == 0:
                 self.save_imgs(epoch)
-        save_path = os.path.join(self.path, self.name)
-        self.discriminator.save(os.path.join(save_path,f"{self.name}_GANdiscriminator.h5"))
-        self.discriminator.save_weights(os.path.join(save_path,f"{self.name}_GANdiscriminator_weights.h5"))
+        save_path = os.path.join(default_folder, self.name)
+        self.base_model.save(os.path.join(save_path,f"{self.name}_GANdiscriminator{epochs}.h5"))
+        self.base_model.save_weights(os.path.join(save_path,f"{self.name}_GANdiscriminator{epochs}_weights.h5"))
         print("Saved model to disk")
 
     def save_imgs(self, epoch):
