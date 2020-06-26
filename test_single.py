@@ -11,7 +11,7 @@ from pathlib import Path
 import math
 
 epochs=15
-dataset_id="Ciarp"
+dataset_id="Nus1"
 iteracion=1
 showgraphics=True
 transferl=True
