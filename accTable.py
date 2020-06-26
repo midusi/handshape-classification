@@ -9,10 +9,10 @@ import numpy as np
 
 
 default_folder = Path.home() / 'handshape-classification' / 'Results'
-folders = ["MobileNet", "DenseNet", "EfficientNet", "ganDiscriminator"]
+folders = ["MobileNet", "DenseNet", "EfficientNet", "ganDiscriminator","ganDiscriminator_neutral"]
 epochs = 15
-table=PrettyTable(["Dataset", "MobileNet", "DenseNet", "EfficientNet", "ganDiscriminator"])
-table_test=PrettyTable(["Dataset", "MobileNet", "DenseNet", "EfficientNet", "ganDiscriminator"])
+table=PrettyTable(["Dataset", "MobileNet", "DenseNet", "EfficientNet", "ganDiscriminator", "PugeaultASLA_GanDiscriminator"])
+table_test=PrettyTable(["Dataset", "MobileNet", "DenseNet", "EfficientNet", "ganDiscriminator","PugeaultASLA_GanDiscriminator"])
 
 table_noTL=PrettyTable(["Dataset", "MobileNet", "DenseNet", "EfficientNet"])
 table_test_noTL=PrettyTable(["Dataset", "MobileNet", "DenseNet", "EfficientNet"])
@@ -37,11 +37,15 @@ for dataset_id in hd.ids():
                 if (model=="EfficientNet"):
                     batch_size = parameters.get_batch_eff(dataset_id)
                 else:
-                    ganfolders= list(filter(lambda x: f"_epochs50" in x, listdir(model_path)))
-                    ganfolders_act= list(filter(lambda x: f"{dataset_id}_" in x, ganfolders))
+                    if(model=="ganDiscriminator"):
+                        ganfolders= list(filter(lambda x: f"_epochs50" in x, listdir(model_path)))
+                        ganfolders_act= list(filter(lambda x: f"{dataset_id}_" in x, ganfolders))
+                    else:
+                        ganfolders_neutral = list(filter(lambda x: f"_epochs50" in x, listdir(model_path)))
+                        ganfolders_act_neutral = list(filter(lambda x: f"{dataset_id}_" in x, ganfolders_neutral))
 
         if(model=="ganDiscriminator"):
-            print(ganfolders_act[0])
+
             ganfolder= os.path.join(model_path,ganfolders_act[0])
             acc_history_path_gan = os.path.join(ganfolder, "acc_history.txt")
             val_acc_history_path_gan = os.path.join(ganfolder, "val_acc_history.txt")
@@ -52,44 +56,56 @@ for dataset_id in hd.ids():
                 lines = f.readlines()
                 val_acc_value_gan = lines[len(lines) - 1]
         else:
+            if(model=="ganDiscriminator_neutral"):
 
-            subsets_folders = list(
-                filter(lambda x: f"{dataset_id}_{model}_batch{batch_size}_epochs{epochs}" in x,
-                    listdir(model_path)))
-            subsets_folders_TL= list(
-                filter(lambda x: f"_noTL" not in x,
-                    subsets_folders))
+                ganfolder_neutral = os.path.join(model_path, ganfolders_act_neutral[0])
+                acc_history_path_gan_neutral = os.path.join(ganfolder_neutral, "acc_history.txt")
+                val_acc_history_path_gan_neutral = os.path.join(ganfolder_neutral, "val_acc_history.txt")
+                with open(acc_history_path_gan_neutral) as f:
+                    lines = f.readlines()
+                    acc_value_gan_neutral = lines[len(lines) - 1]
+                with open(val_acc_history_path_gan_neutral) as f:
+                    lines = f.readlines()
+                    val_acc_value_gan_neutral = lines[len(lines) - 1]
+            else:
 
-            subsets_folders_noTL = list(
-                filter(lambda x: f"{dataset_id}_{model}_batch{batch_size}_epochs{epochs}_noTL" in x,
+                subsets_folders = list(
+                    filter(lambda x: f"{dataset_id}_{model}_batch{batch_size}_epochs{epochs}" in x,
                         listdir(model_path)))
+                subsets_folders_TL= list(
+                    filter(lambda x: f"_noTL" not in x,
+                        subsets_folders))
+
+                subsets_folders_noTL = list(
+                    filter(lambda x: f"{dataset_id}_{model}_batch{batch_size}_epochs{epochs}_noTL" in x,
+                            listdir(model_path)))
 
 
-            folder_act_noTL = os.path.join(model_path, subsets_folders_noTL[0])
-            acc_history_path_noTL = os.path.join(folder_act_noTL, "acc_history.txt")
-            val_acc_history_path_noTL = os.path.join(folder_act_noTL, "val_acc_history.txt")
-            with open(acc_history_path_noTL) as f:
-                lines = f.readlines()
-                acc_value_noTL[i] = lines[len(lines) - 1]
-            with open(val_acc_history_path_noTL) as f:
-                lines = f.readlines()
-                val_acc_value_noTL[i] = lines[len(lines) - 1]
+                folder_act_noTL = os.path.join(model_path, subsets_folders_noTL[0])
+                acc_history_path_noTL = os.path.join(folder_act_noTL, "acc_history.txt")
+                val_acc_history_path_noTL = os.path.join(folder_act_noTL, "val_acc_history.txt")
+                with open(acc_history_path_noTL) as f:
+                    lines = f.readlines()
+                    acc_value_noTL[i] = lines[len(lines) - 1]
+                with open(val_acc_history_path_noTL) as f:
+                    lines = f.readlines()
+                    val_acc_value_noTL[i] = lines[len(lines) - 1]
 
-            folder_act = os.path.join(model_path, subsets_folders_TL[0])
-            acc_history_path = os.path.join(folder_act, "acc_history.txt")
-            val_acc_history_path = os.path.join(folder_act, "val_acc_history.txt")
-            with open(acc_history_path) as f:
-                lines = f.readlines()
-                acc_value[i]=lines[len(lines)-1]
-            with open(val_acc_history_path) as f:
-                lines = f.readlines()
-                val_acc_value[i]=lines[len(lines)-1]
+                folder_act = os.path.join(model_path, subsets_folders_TL[0])
+                acc_history_path = os.path.join(folder_act, "acc_history.txt")
+                val_acc_history_path = os.path.join(folder_act, "val_acc_history.txt")
+                with open(acc_history_path) as f:
+                    lines = f.readlines()
+                    acc_value[i]=lines[len(lines)-1]
+                with open(val_acc_history_path) as f:
+                    lines = f.readlines()
+                    val_acc_value[i]=lines[len(lines)-1]
 
     table_test_noTL.add_row([dataset_id, val_acc_value_noTL[0], val_acc_value_noTL[1], val_acc_value_noTL[2]])
     table_noTL.add_row([dataset_id, acc_value_noTL[0], acc_value_noTL[1], acc_value_noTL[2]])
 
-    table_test.add_row([dataset_id, val_acc_value[0], val_acc_value[1], val_acc_value[2], val_acc_value_gan])
-    table.add_row([dataset_id, acc_value[0], acc_value[1], acc_value[2],acc_value_gan])
+    table_test.add_row([dataset_id, val_acc_value[0], val_acc_value[1], val_acc_value[2], val_acc_value_gan, val_acc_value_gan_neutral])
+    table.add_row([dataset_id, acc_value[0], acc_value[1], acc_value[2],acc_value_gan, acc_value_gan_neutral])
 print (table)
 print (table_test)
 

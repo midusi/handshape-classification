@@ -24,14 +24,35 @@ class ganDiscriminator(Experiment):
     def __init__(self, epochs, batch_size, dataset_id, **kwargs):
         self.tl = True
 
-        load_path = os.path.join(gan_folder, dataset_id)
-        files = list(
-            filter(lambda x: ".h5" in x,
-                   listdir(load_path)))
-        init = files[0][:].find("discriminator") + 13
-        epochs_ganTraining = files[0][init:-3]
+        if 'neutralGan' in kwargs:
+            self.neutralgan = kwargs['neutralGan']
+            if (self.neutralgan):
+                load_path = os.path.join(gan_folder, "PugeaultASL_A")
+                files = list(
+                    filter(lambda x: ".h5" in x,
+                           listdir(load_path)))
+                init = files[0][:].find("discriminator") + 13
+                epochs_ganTraining = files[0][init:-3]
+                super().__init__(f"ganDiscriminator_neutral", f"{dataset_id}_{epochs_ganTraining}", epochs, batch_size)
+            else:
+                load_path = os.path.join(gan_folder, dataset_id)
+                files = list(
+                    filter(lambda x: ".h5" in x,
+                           listdir(load_path)))
+                init = files[0][:].find("discriminator") + 13
+                epochs_ganTraining = files[0][init:-3]
+                super().__init__(f"ganDiscriminator", f"{dataset_id}_{epochs_ganTraining}", epochs, batch_size)
 
-        super().__init__(f"ganDiscriminator", f"{dataset_id}_{epochs_ganTraining}", epochs, batch_size)
+        else:
+            self.neutralgan = False
+            load_path = os.path.join(gan_folder, dataset_id)
+            files = list(
+                filter(lambda x: ".h5" in x,
+                       listdir(load_path)))
+            init = files[0][:].find("discriminator") + 13
+            epochs_ganTraining = files[0][init:-3]
+            super().__init__(f"ganDiscriminator", f"{dataset_id}_{epochs_ganTraining}", epochs, batch_size)
+
         if 'version' in kwargs:
             ver=kwargs['version']
         if 'delete' in kwargs:
@@ -71,7 +92,6 @@ class ganDiscriminator(Experiment):
 
     def get_result(self):
         path = self.get_path()
-
         loss_history = self.history.history["loss"]
         acc_history = self.history.history["accuracy"]
         val_loss_history = self.history.history["val_loss"]
@@ -165,7 +185,11 @@ class ganDiscriminator(Experiment):
 
     def build_model(self):
         img = keras.layers.Input(shape=(self.input_shape[0],self.input_shape[1],3))
-        load_path = os.path.join(gan_folder,self.dataset_id)
+        if(self.neutralgan==False):
+            load_path = os.path.join(gan_folder, self.dataset_id)
+        else:
+
+            load_path=os.path.join(gan_folder, "PugeaultASL_A")
         files = list(
             filter(lambda x: ".h5" in x,
                    listdir(load_path)))
