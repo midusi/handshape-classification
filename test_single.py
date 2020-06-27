@@ -11,7 +11,7 @@ from pathlib import Path
 import math
 
 epochs=15
-dataset_id="Nus1"
+dataset_id="indianA"
 iteracion=1
 showgraphics=True
 transferl=True
@@ -23,7 +23,7 @@ acc_avg_de=np.zeros(iteracion)
 acc_avg_gd=np.zeros(iteracion)
 
 for i in range(iteracion):
-  """
+
   ##MobileNet
   mobile = mn.MobileNet(epochs, parameters.get_batch_mobile(dataset_id), dataset_id,tl=transferl)
   model = mobile.build_model()
@@ -52,7 +52,7 @@ for i in range(iteracion):
   acc_avg_eff[i] = acc_last_eff
   """
   # GanDiscriminator
-  gdm = gd.ganDiscriminator(50, parameters.get_batch_mobile(dataset_id), dataset_id, tl=transferl, neutralGan=True)
+  gdm = gd.ganDiscriminator(50, parameters.get_batch_mobile(dataset_id), dataset_id, tl=transferl, neutralGan=False)
   gdmodel = gdm.build_model()
   X_train, X_test, Y_train, Y_test = gdm.split(parameters.get_split_value(dataset_id))
   history = gdm.load(gdmodel, X_train, Y_train, X_test, Y_test)
